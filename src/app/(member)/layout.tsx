@@ -1,0 +1,35 @@
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import { MemberNav } from "@/components/layout/MemberNav";
+import connectDB from "@/lib/db";
+import User from "@/models/User";
+import DailyLoginTrigger from "./DailyLoginTrigger";
+
+export default async function MemberLayout({ children }: { children: React.ReactNode }) {
+  const headersList = await headers();
+  const userId = headersList.get("x-user-id");
+  const userName = headersList.get("x-user-name") ?? "Member";
+  const userRole = headersList.get("x-user-role") ?? "member";
+
+  if (!userId) redirect("/login");
+
+  await connectDB();
+  const user = await User.findById(userId).select("totalPoints name").lean();
+  const totalPoints = user?.totalPoints ?? 0;
+
+  return (
+    <div className="min-h-screen bg-cream-light">
+      <MemberNav userName={userName} totalPoints={totalPoints} role={userRole} />
+
+      {/* Daily login trigger (client component, fire-and-forget) */}
+      <DailyLoginTrigger />
+
+      {/* Content offset for sidebar */}
+      <main className="lg:pl-64 min-h-screen">
+        <div className="pt-14 lg:pt-0">
+          {children}
+        </div>
+      </main>
+    </div>
+  );
+}
