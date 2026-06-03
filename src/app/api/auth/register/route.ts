@@ -9,7 +9,7 @@ import { sendSMS } from "@/lib/sms";
 const RegisterSchema = z.object({
   name: z.string().min(2).max(100),
   phone: z.string().min(7).max(20),
-  gender: z.enum(["male", "female", "other"]),
+  gender: z.enum(["male", "female"]),
   membershipType: z.enum(["member", "visitor", "invitee", "convert"]),
   location: z.string().min(2).max(200),
   password: z.string().min(6).max(100),

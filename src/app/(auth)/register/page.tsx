@@ -88,7 +88,7 @@ export default function RegisterPage() {
                 label="Gender"
                 value={form.gender}
                 onChange={(e) => set("gender", e.target.value)}
-                options={[{ value: "male", label: "Male" }, { value: "female", label: "Female" }, { value: "other", label: "Other" }]}
+                options={[{ value: "male", label: "Male" }, { value: "female", label: "Female" }]}
               />
               <Select
                 label="I am a…"
