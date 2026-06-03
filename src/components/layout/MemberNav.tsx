@@ -78,13 +78,13 @@ export function MemberNav({ userName, totalPoints, role }: MemberNavProps) {
 
         {/* User section */}
         <div className="px-4 py-4 border-t border-navy-light/30">
-          <div className="flex items-center gap-3 mb-3">
+          <Link href="/profile" className="flex items-center gap-3 mb-3 hover:opacity-80 transition-opacity">
             <Avatar name={userName} size="sm" />
             <div className="min-w-0">
               <p className="text-sm font-body font-medium text-cream truncate">{userName}</p>
               <p className="text-xs text-gold font-body">{totalPoints.toLocaleString()} pts</p>
             </div>
-          </div>
+          </Link>
           <button
             onClick={handleLogout}
             className="w-full text-left text-xs text-cream/50 hover:text-cream font-body transition-colors"
@@ -141,10 +141,14 @@ export function MemberNav({ userName, totalPoints, role }: MemberNavProps) {
               </Link>
             )}
             <div className="mt-6 pt-4 border-t border-navy-light/30 flex items-center justify-between">
-              <div className="flex items-center gap-2">
+              <Link
+                href="/profile"
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+              >
                 <Avatar name={userName} size="sm" />
                 <span className="text-sm text-cream font-body">{userName}</span>
-              </div>
+              </Link>
               <button onClick={handleLogout} className="text-sm text-cream/50 font-body">
                 Sign out
               </button>

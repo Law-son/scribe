@@ -201,8 +201,16 @@ export function AdminNav({ userName }: AdminNavProps) {
 
             {navContent}
 
-            <div className="px-4 py-4 border-t border-white/5">
-              <div className="flex items-center gap-3 mb-3">
+            <div className="px-4 py-4 border-t border-white/5 space-y-3">
+              <Link
+                href="/dashboard"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2 text-xs text-cream/40 hover:text-cream font-body transition-colors"
+              >
+                <ChevronLeft size={13} />
+                Member View
+              </Link>
+              <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-navy flex items-center justify-center">
                   <span className="text-xs font-heading font-bold text-gold">{initials}</span>
                 </div>
