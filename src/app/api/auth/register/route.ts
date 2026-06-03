@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import connectDB from "@/lib/db";
 import User from "@/models/User";
 import { signToken, setAuthCookie } from "@/lib/auth";
+import { sendSMS } from "@/lib/sms";
 
 const RegisterSchema = z.object({
   name: z.string().min(2).max(100),
@@ -63,6 +64,11 @@ export async function POST(req: NextRequest) {
       role: "member",
       referredBy: referredBy || undefined,
     });
+
+    sendSMS(
+      [normalizedPhone],
+      `Welcome to UCM Scribe, ${name}! Your account has been created. Explore sermons, Bible study notes, devotionals, and more. God bless you!`
+    ).catch((err) => console.error("[Auth/Register] Welcome SMS failed:", err));
 
     const token = await signToken({
       sub: user._id.toString(),

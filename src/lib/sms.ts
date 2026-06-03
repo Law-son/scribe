@@ -29,7 +29,7 @@ export async function sendSMS(to: string[], message: string): Promise<void> {
         action: "send-sms",
         api_key: apiKey,
         to: batch,
-        from: process.env.ARKESEL_SENDER_ID || "UCMScribe",
+        from: process.env.ARKESEL_SENDER_ID || "UCM Scribe",
         sms: message,
       });
 

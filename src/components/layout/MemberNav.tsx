@@ -131,6 +131,15 @@ export function MemberNav({ userName, totalPoints, role }: MemberNavProps) {
                 <span>{icon}</span> {label}
               </Link>
             ))}
+            {role === "admin" && (
+              <Link
+                href="/admin"
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center gap-3 px-3 py-3 rounded-lg mb-1 text-sm font-body text-amber border-t border-navy-light/30 pt-3 mt-2"
+              >
+                <span>⚙️</span> Admin Portal
+              </Link>
+            )}
             <div className="mt-6 pt-4 border-t border-navy-light/30 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Avatar name={userName} size="sm" />
