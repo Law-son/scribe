@@ -14,6 +14,7 @@ const MEMBER_PREFIXES = [
   "/evangelism",
   "/leaderboard",
   "/api/points",
+  "/api/users",
 ];
 
 const ADMIN_PREFIXES = ["/admin"];
@@ -69,6 +70,7 @@ export const config = {
     "/evangelism/:path*",
     "/leaderboard/:path*",
     "/api/points/:path*",
+    "/api/users/:path*",
     "/admin/:path*",
   ],
 };

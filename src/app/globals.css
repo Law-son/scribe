@@ -148,6 +148,40 @@ body {
   display: none;
 }
 
+/* Bible verse blocks — editor + member view */
+.bible-verse-block {
+  position: relative;
+  margin: 1.5rem 0;
+  padding: 1rem 1.25rem 1rem 1.5rem;
+  background: var(--color-cream);
+  border-left: 3px solid var(--color-gold);
+  border-radius: 0 0.75rem 0.75rem 0;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.bible-verse-block:hover {
+  background: color-mix(in srgb, var(--color-gold) 8%, var(--color-cream));
+}
+
+.bible-verse-block .verse-text {
+  font-family: var(--font-heading);
+  font-style: italic;
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--color-navy-dark);
+  margin: 0 0 0.5rem 0;
+}
+
+.bible-verse-block .verse-ref {
+  display: block;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-gold-dark);
+  letter-spacing: 0.02em;
+}
+
 /* Reading progress bar */
 .reading-progress {
   position: fixed;

@@ -4,6 +4,7 @@ import connectDB from "@/lib/db";
 import Sermon from "@/models/Sermon";
 import Comment from "@/models/Comment";
 import { RichTextRenderer } from "@/components/content/RichTextRenderer";
+import { BibleVerseModal } from "@/components/content/BibleVerseModal";
 import { LikeButton } from "@/components/content/LikeButton";
 import { CommentSection } from "@/components/content/CommentSection";
 import { Badge } from "@/components/ui/Badge";
@@ -98,7 +99,9 @@ export default async function SermonPage({ params }: { params: Promise<{ id: str
         )}
 
         {/* Content */}
-        <RichTextRenderer content={sermon.content} className="mb-10" />
+        <BibleVerseModal>
+          <RichTextRenderer content={sermon.content} className="mb-10" />
+        </BibleVerseModal>
 
         {/* Actions */}
         <div className="flex items-center gap-4 py-6 border-t border-b border-cream-dark mb-8">

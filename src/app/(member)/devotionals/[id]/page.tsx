@@ -5,6 +5,7 @@ import connectDB from "@/lib/db";
 import Devotional from "@/models/Devotional";
 import Comment from "@/models/Comment";
 import { RichTextRenderer } from "@/components/content/RichTextRenderer";
+import { BibleVerseModal } from "@/components/content/BibleVerseModal";
 import { LikeButton } from "@/components/content/LikeButton";
 import { CommentSection } from "@/components/content/CommentSection";
 import { ReadingProgress } from "@/components/content/ReadingProgress";
@@ -55,7 +56,7 @@ export default async function DevotionalDetailPage({ params }: { params: Promise
 
         <div className="border-t border-cream-dark pt-6 mb-6" />
 
-        <RichTextRenderer content={doc.content} className="mb-10" />
+        <BibleVerseModal><RichTextRenderer content={doc.content} className="mb-10" /></BibleVerseModal>
 
         <div className="flex items-center gap-4 py-6 border-t border-b border-cream-dark mb-8">
           <LikeButton contentType="devotionals" contentId={id} initialLiked={isLiked} initialCount={doc.likesCount} />

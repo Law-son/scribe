@@ -5,6 +5,7 @@ import connectDB from "@/lib/db";
 import BibleStudy from "@/models/BibleStudy";
 import Comment from "@/models/Comment";
 import { RichTextRenderer } from "@/components/content/RichTextRenderer";
+import { BibleVerseModal } from "@/components/content/BibleVerseModal";
 import { LikeButton } from "@/components/content/LikeButton";
 import { CommentSection } from "@/components/content/CommentSection";
 import { Badge } from "@/components/ui/Badge";
@@ -41,7 +42,7 @@ export default async function BibleStudyDetailPage({ params }: { params: Promise
         <p className="text-sm text-navy/50 font-body mb-8 pb-6 border-b border-cream-dark">
           {format(new Date(doc.date ?? doc.createdAt), "MMMM d, yyyy")}
         </p>
-        <RichTextRenderer content={doc.content} className="mb-10" />
+        <BibleVerseModal><RichTextRenderer content={doc.content} className="mb-10" /></BibleVerseModal>
         <div className="flex items-center gap-4 py-6 border-t border-b border-cream-dark mb-8">
           <LikeButton contentType="bible-study" contentId={id} initialLiked={isLiked} initialCount={doc.likesCount} />
         </div>
