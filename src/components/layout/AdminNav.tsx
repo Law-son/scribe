@@ -15,6 +15,7 @@ import {
   Users,
   Sprout,
   BarChart3,
+  Settings,
   LogOut,
   Menu,
   X,
@@ -46,6 +47,10 @@ const sections = [
   {
     label: "Analytics",
     links: [{ href: "/admin/reports", label: "Reports", icon: BarChart3 }],
+  },
+  {
+    label: "System",
+    links: [{ href: "/admin/settings", label: "Settings", icon: Settings }],
   },
 ];
 

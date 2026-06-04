@@ -46,7 +46,7 @@ export function CommentSection({ contentType, contentId, initialComments }: Comm
   return (
     <section className="mt-10 pt-8 border-t border-cream-dark">
       <h3 className="font-heading text-xl text-navy font-semibold mb-6">
-        Reflections ({comments.length})
+        Comments ({comments.length})
       </h3>
 
       {/* Comment form */}
@@ -60,7 +60,7 @@ export function CommentSection({ contentType, contentId, initialComments }: Comm
         />
         <div className="flex justify-end mt-2">
           <Button type="submit" size="sm" loading={loading} disabled={!text.trim()}>
-            Post Reflection
+            Post Comment
           </Button>
         </div>
       </form>
@@ -69,7 +69,7 @@ export function CommentSection({ contentType, contentId, initialComments }: Comm
       <div className="space-y-5">
         {comments.length === 0 && (
           <p className="text-sm text-gray-400 font-body text-center py-4">
-            Be the first to share a reflection.
+            Be the first to leave a comment.
           </p>
         )}
         {comments.map((c) => (

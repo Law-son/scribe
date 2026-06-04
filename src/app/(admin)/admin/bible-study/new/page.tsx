@@ -13,7 +13,7 @@ export default function NewBibleStudyPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [content, setContent] = useState<object | null>(null);
-  const [form, setForm] = useState({ title: "", topic: "", date: "", category: "", status: "draft" });
+  const [form, setForm] = useState({ topic: "", date: "", status: "draft" });
   function set(k: string, v: string) { setForm((f) => ({ ...f, [k]: v })); }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -40,11 +40,7 @@ export default function NewBibleStudyPage() {
       </div>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="bg-white border border-cream-dark rounded-xl p-6 space-y-4">
-          <Input label="Title *" placeholder="Study title" value={form.title} onChange={(e) => set("title", e.target.value)} required />
-          <div className="grid grid-cols-2 gap-4">
-            <Input label="Topic *" placeholder="Main topic" value={form.topic} onChange={(e) => set("topic", e.target.value)} required />
-            <Input label="Category" placeholder="e.g. Prophecy" value={form.category} onChange={(e) => set("category", e.target.value)} />
-          </div>
+          <Input label="Topic *" placeholder="Main topic or passage" value={form.topic} onChange={(e) => set("topic", e.target.value)} required />
           <Input label="Date" type="date" value={form.date} onChange={(e) => set("date", e.target.value)} />
         </div>
         <div>

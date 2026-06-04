@@ -7,8 +7,8 @@ import Comment from "@/models/Comment";
 import { RichTextRenderer } from "@/components/content/RichTextRenderer";
 import { BibleVerseModal } from "@/components/content/BibleVerseModal";
 import { LikeButton } from "@/components/content/LikeButton";
+import { ShareButton } from "@/components/content/ShareButton";
 import { CommentSection } from "@/components/content/CommentSection";
-import { Badge } from "@/components/ui/Badge";
 import { ReadingProgress } from "@/components/content/ReadingProgress";
 import { ViewTracker } from "@/components/content/ViewTracker";
 import { format } from "date-fns";
@@ -36,15 +36,14 @@ export default async function BibleStudyDetailPage({ params }: { params: Promise
         <nav className="mb-6">
           <Link href="/bible-study" className="text-sm text-navy/50 font-body hover:text-navy">← All Bible Study Notes</Link>
         </nav>
-        {doc.category && <Badge variant="green" className="mb-4">{doc.category}</Badge>}
-        <h1 className="font-heading text-3xl sm:text-4xl text-navy font-bold leading-tight mb-3">{doc.title}</h1>
-        <p className="text-navy font-body font-medium mb-1">{doc.topic}</p>
+        <h1 className="font-heading text-3xl sm:text-4xl text-navy font-bold leading-tight mb-3">{doc.topic ?? doc.title}</h1>
         <p className="text-sm text-navy/50 font-body mb-8 pb-6 border-b border-cream-dark">
           {format(new Date(doc.date ?? doc.createdAt), "MMMM d, yyyy")}
         </p>
         <BibleVerseModal><RichTextRenderer content={doc.content} className="mb-10" /></BibleVerseModal>
         <div className="flex items-center gap-4 py-6 border-t border-b border-cream-dark mb-8">
           <LikeButton contentType="bible-study" contentId={id} initialLiked={isLiked} initialCount={doc.likesCount} />
+          <ShareButton title={doc.topic ?? doc.title ?? "Bible Study"} />
         </div>
         <CommentSection
           contentType="bible-study"

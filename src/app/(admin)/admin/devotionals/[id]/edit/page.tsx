@@ -4,10 +4,13 @@ import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { BibleVersePicker } from "@/components/ui/BibleVersePicker";
 import { RichTextEditor } from "@/components/editor/RichTextEditor";
 import { PageLoader } from "@/components/ui/Spinner";
 import toast from "react-hot-toast";
 import Link from "next/link";
+
+interface VerseValue { reference: string; text: string; translation: string; }
 
 export default function EditDevotionalPage() {
   const { id } = useParams<{ id: string }>();
@@ -15,7 +18,13 @@ export default function EditDevotionalPage() {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [content, setContent] = useState<object | null>(null);
-  const [form, setForm] = useState({ title: "", verse: "", verseText: "", scheduledAt: "" });
+  const [verse, setVerse] = useState<VerseValue | null>(null);
+  const [form, setForm] = useState({
+    topic: "",
+    dayNumber: "",
+    weekNumber: "",
+    weekTheme: "",
+  });
 
   useEffect(() => {
     fetch(`/api/devotionals/${id}`)
@@ -24,7 +33,19 @@ export default function EditDevotionalPage() {
         return r.json();
       })
       .then((data) => {
-        setForm({ title: data.title ?? "", verse: data.verse ?? "", verseText: data.verseText ?? "", scheduledAt: data.scheduledAt ? data.scheduledAt.slice(0, 16) : "" });
+        setForm({
+          topic: data.topic ?? data.title ?? "",
+          dayNumber: String(data.dayNumber ?? ""),
+          weekNumber: data.weekNumber ?? "",
+          weekTheme: data.weekTheme ?? "",
+        });
+        if (data.verse) {
+          setVerse({
+            reference: data.verse,
+            text: data.verseText ?? "",
+            translation: data.verseTranslation ?? "KJV",
+          });
+        }
         setContent(data.content ?? null);
       })
       .catch(() => toast.error("Failed to load devotional"))
@@ -36,7 +57,21 @@ export default function EditDevotionalPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    const res = await fetch(`/api/devotionals/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...form, content }) });
+    const res = await fetch(`/api/devotionals/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        topic: form.topic,
+        title: form.topic, // keep legacy field in sync
+        dayNumber: parseInt(form.dayNumber) || 1,
+        weekNumber: form.weekNumber,
+        weekTheme: form.weekTheme,
+        verse: verse?.reference ?? null,
+        verseText: verse?.text ?? null,
+        verseTranslation: verse?.translation ?? null,
+        content,
+      }),
+    });
     if (res.ok) { toast.success("Updated!"); router.push("/admin/devotionals"); }
     else toast.error("Failed to update");
     setLoading(false);
@@ -59,16 +94,46 @@ export default function EditDevotionalPage() {
       </div>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="bg-white border border-cream-dark rounded-xl p-6 space-y-4">
-          <Input label="Title" value={form.title} onChange={(e) => set("title", e.target.value)} required />
-          <Input label="Scheduled Date" type="datetime-local" value={form.scheduledAt} onChange={(e) => set("scheduledAt", e.target.value)} />
-          <Input label="Scripture Reference" value={form.verse} onChange={(e) => set("verse", e.target.value)} />
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-navy font-body">Scripture Text</label>
-            <textarea rows={3} className="rounded-md border border-cream-dark bg-white px-3 py-2 text-sm font-body text-navy-dark focus:outline-none focus:ring-2 focus:ring-navy resize-none"
-              value={form.verseText} onChange={(e) => set("verseText", e.target.value)} />
+          <BibleVersePicker value={verse} onChange={setVerse} label="Main Scripture Reference" />
+
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label="Day Number"
+              type="number"
+              min="1"
+              value={form.dayNumber}
+              onChange={(e) => {
+                const d = parseInt(e.target.value) || 1;
+                const week = String(Math.ceil(d / 7)).padStart(2, "0");
+                setForm((f) => ({ ...f, dayNumber: e.target.value, weekNumber: week }));
+              }}
+            />
+            <Input
+              label="Week Number"
+              placeholder="e.g. 01"
+              value={form.weekNumber}
+              onChange={(e) => set("weekNumber", e.target.value)}
+            />
           </div>
+
+          <Input
+            label="Week Theme"
+            placeholder="e.g. Walking in Faith"
+            value={form.weekTheme}
+            onChange={(e) => set("weekTheme", e.target.value)}
+          />
+
+          <Input
+            label="Topic *"
+            placeholder="e.g. The Grace of God"
+            value={form.topic}
+            onChange={(e) => set("topic", e.target.value)}
+            required
+          />
         </div>
+
         {content !== null && <RichTextEditor value={content} onChange={setContent} />}
+
         <div className="flex items-center gap-4">
           <Button type="submit" loading={loading}>Save Changes</Button>
           <Button type="button" variant="danger" onClick={handleDelete} className="ml-auto">Delete</Button>

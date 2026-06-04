@@ -5,11 +5,14 @@ import connectDB from "@/lib/db";
 import Devotional from "@/models/Devotional";
 
 const CreateSchema = z.object({
-  title: z.string().min(1).max(200),
+  topic: z.string().min(1).max(200),
+  dayNumber: z.number().int().positive().optional(),
+  weekNumber: z.string().optional(),
+  weekTheme: z.string().optional(),
   verse: z.string().optional(),
   verseText: z.string().optional(),
+  verseTranslation: z.string().optional(),
   content: z.object({}).passthrough(),
-  scheduledAt: z.string(),
 });
 
 export async function GET(req: NextRequest) {
@@ -20,11 +23,10 @@ export async function GET(req: NextRequest) {
   const skip = (page - 1) * limit;
   const now = new Date();
 
-  // Only show approved devotionals whose scheduledAt has passed
   const query = { status: "approved" as const, scheduledAt: { $lte: now } };
 
   const [data, total] = await Promise.all([
-    Devotional.find(query).sort({ scheduledAt: -1 }).skip(skip).limit(limit).select("-content -likes").lean(),
+    Devotional.find(query).sort({ dayNumber: -1 }).skip(skip).limit(limit).select("-content -likes").lean(),
     Devotional.countDocuments(query),
   ]);
 
@@ -47,6 +49,21 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) return NextResponse.json({ error: "Invalid input" }, { status: 400 });
 
   await connectDB();
-  const doc = await Devotional.create({ ...parsed.data, authorId: userId, status: "pending" });
+
+  const data = parsed.data;
+  const totalExisting = await Devotional.countDocuments();
+  const dayNumber = data.dayNumber ?? totalExisting + 1;
+  const weekNumber = data.weekNumber ?? String(Math.ceil(dayNumber / 7)).padStart(2, "0");
+
+  const doc = await Devotional.create({
+    ...data,
+    dayNumber,
+    weekNumber,
+    title: data.topic, // keep title in sync for legacy reads
+    scheduledAt: new Date(),
+    authorId: userId,
+    status: "pending",
+  });
+
   return NextResponse.json({ id: doc._id.toString() }, { status: 201 });
 }

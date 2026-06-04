@@ -6,11 +6,9 @@ import BibleStudy from "@/models/BibleStudy";
 import { broadcastToAllMembers, SMS_TEMPLATES } from "@/lib/sms";
 
 const CreateSchema = z.object({
-  title: z.string().min(1).max(200),
   topic: z.string().min(1).max(200),
   date: z.string(),
   content: z.object({}).passthrough(),
-  category: z.string().optional(),
   status: z.enum(["draft", "published"]).default("draft"),
 });
 
@@ -52,6 +50,7 @@ export async function POST(req: NextRequest) {
   const data = parsed.data;
   const doc = await BibleStudy.create({
     ...data,
+    title: data.topic, // keep title in sync for legacy reads
     authorId: userId,
     publishedAt: data.status === "published" ? new Date() : undefined,
   });

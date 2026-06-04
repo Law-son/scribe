@@ -7,10 +7,10 @@ import Comment from "@/models/Comment";
 import { RichTextRenderer } from "@/components/content/RichTextRenderer";
 import { BibleVerseModal } from "@/components/content/BibleVerseModal";
 import { LikeButton } from "@/components/content/LikeButton";
+import { ShareButton } from "@/components/content/ShareButton";
 import { CommentSection } from "@/components/content/CommentSection";
 import { ReadingProgress } from "@/components/content/ReadingProgress";
 import { ViewTracker } from "@/components/content/ViewTracker";
-import { format } from "date-fns";
 
 export default async function DevotionalDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -27,6 +27,7 @@ export default async function DevotionalDetailPage({ params }: { params: Promise
   if (!doc) notFound();
 
   const isLiked = userId ? doc.likes.some((l) => l.toString() === userId) : false;
+  const displayTitle = doc.topic ?? doc.title ?? "Devotional";
 
   return (
     <>
@@ -37,12 +38,25 @@ export default async function DevotionalDetailPage({ params }: { params: Promise
           <Link href="/devotionals" className="text-sm text-navy/50 font-body hover:text-navy">← Devotionals</Link>
         </nav>
 
-        <p className="text-sm text-gold-dark font-body font-medium mb-2">
-          {format(new Date(doc.scheduledAt), "EEEE, MMMM d, yyyy")}
-        </p>
+        {/* Day / Week metadata */}
+        {doc.dayNumber ? (
+          <div className="flex items-center gap-3 mb-3 flex-wrap">
+            <span className="inline-flex items-center gap-1.5 bg-navy/8 text-navy text-xs font-body font-semibold px-3 py-1.5 rounded-full">
+              Day {doc.dayNumber}
+            </span>
+            {doc.weekNumber && (
+              <span className="inline-flex items-center gap-1.5 bg-gold/15 text-gold-dark text-xs font-body font-semibold px-3 py-1.5 rounded-full">
+                Week {doc.weekNumber}
+              </span>
+            )}
+            {doc.weekTheme && (
+              <span className="text-xs text-navy/50 font-body italic">{doc.weekTheme}</span>
+            )}
+          </div>
+        ) : null}
 
         <h1 className="font-heading text-3xl sm:text-4xl text-navy font-bold leading-tight mb-4">
-          {doc.title}
+          {displayTitle}
         </h1>
 
         {doc.verse && (
@@ -60,6 +74,7 @@ export default async function DevotionalDetailPage({ params }: { params: Promise
 
         <div className="flex items-center gap-4 py-6 border-t border-b border-cream-dark mb-8">
           <LikeButton contentType="devotionals" contentId={id} initialLiked={isLiked} initialCount={doc.likesCount} />
+          <ShareButton title={displayTitle} />
         </div>
 
         <CommentSection

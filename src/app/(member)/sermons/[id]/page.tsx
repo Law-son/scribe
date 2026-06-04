@@ -6,6 +6,7 @@ import Comment from "@/models/Comment";
 import { RichTextRenderer } from "@/components/content/RichTextRenderer";
 import { BibleVerseModal } from "@/components/content/BibleVerseModal";
 import { LikeButton } from "@/components/content/LikeButton";
+import { ShareButton } from "@/components/content/ShareButton";
 import { CommentSection } from "@/components/content/CommentSection";
 import { Badge } from "@/components/ui/Badge";
 import { ReadingProgress } from "@/components/content/ReadingProgress";
@@ -120,12 +121,7 @@ export default async function SermonPage({ params }: { params: Promise<{ id: str
               📄 Download PDF
             </a>
           )}
-          <button
-            onClick={undefined}
-            className="flex items-center gap-2 text-sm font-body text-navy/60 hover:text-navy border border-cream-dark rounded-full px-3 py-1.5 transition-colors ml-auto"
-          >
-            Share 🔗
-          </button>
+          <ShareButton title={sermon.title} />
         </div>
 
         {/* Comments */}
