@@ -15,7 +15,8 @@ export async function GET(
 
   await connectDB();
   // Admins can view any sermon (including drafts); members only see published
-  const query = role === "admin" ? { _id: id } : { _id: id, status: "published" };
+  const query: { _id: string; status?: "draft" | "published" } = { _id: id };
+  if (role !== "admin") query.status = "published";
   const sermon = await Sermon.findOne(query).lean();
   if (!sermon) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
