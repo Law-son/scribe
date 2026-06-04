@@ -22,12 +22,34 @@ export const metadata: Metadata = {
     template: "%s | UCM Scribe",
   },
   description:
-    "A digital platform for spiritual growth, community engagement, and evangelism.",
+    "Grow in faith. Engage with God's Word. Sermons, devotionals, Bible study notes, and community for UCM members.",
+  icons: {
+    icon: [
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/icon.png", sizes: "32x32", type: "image/png" },
+    ],
+    apple: "/apple-touch-icon.png",
+  },
   openGraph: {
-    title: "UCM Scribe",
+    title: "UCM Scribe — Digital Faith Platform",
     description:
-      "Sermons, Bible study notes, devotionals, and community engagement for UCM members.",
+      "Grow in faith. Engage with God's Word. Sermons, devotionals, Bible study notes, and community for UCM members.",
     type: "website",
+    images: [
+      {
+        url: "/apple-touch-icon.png",
+        width: 180,
+        height: 180,
+        alt: "UCM Scribe",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary",
+    title: "UCM Scribe — Digital Faith Platform",
+    description:
+      "Grow in faith. Engage with God's Word. Sermons, devotionals, Bible study notes, and community for UCM members.",
+    images: ["/apple-touch-icon.png"],
   },
 };
 

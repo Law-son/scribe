@@ -1,11 +1,14 @@
 import { headers } from "next/headers";
+import { startOfMonth, endOfMonth } from "date-fns";
 import connectDB from "@/lib/db";
 import PointTransaction from "@/models/PointTransaction";
+import LeaderboardFilter from "./LeaderboardFilter";
 
 export const metadata = { title: "Community Champions" };
 
-async function getLeaderboard(limit = 50) {
+async function getLeaderboard(from: Date, to: Date, limit = 50) {
   const entries = await PointTransaction.aggregate([
+    { $match: { createdAt: { $gte: from, $lte: to } } },
     { $group: { _id: "$userId", points: { $sum: "$points" } } },
     { $sort: { points: -1 } },
     { $limit: limit },
@@ -23,12 +26,31 @@ const RANK_BG = [
   "bg-gradient-to-r from-orange-50 to-amber-50 border-orange-300",
 ];
 
-export default async function LeaderboardPage() {
+const MONTHS = [
+  "January","February","March","April","May","June",
+  "July","August","September","October","November","December",
+];
+
+export default async function LeaderboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ month?: string; year?: string }>;
+}) {
   const headersList = await headers();
   const userId = headersList.get("x-user-id");
 
+  const now = new Date();
+  const params = await searchParams;
+  const month = Math.min(12, Math.max(1, Number(params.month ?? now.getMonth() + 1)));
+  const year = Number(params.year ?? now.getFullYear());
+
+  const periodStart = startOfMonth(new Date(year, month - 1, 1));
+  const periodEnd = endOfMonth(periodStart);
+
+  const isCurrentMonth = month === now.getMonth() + 1 && year === now.getFullYear();
+
   await connectDB();
-  const entries = await getLeaderboard(50);
+  const entries = await getLeaderboard(periodStart, periodEnd, 50);
 
   const top3 = entries.slice(0, 3);
   const rest = entries.slice(3);
@@ -36,7 +58,7 @@ export default async function LeaderboardPage() {
   return (
     <div className="max-w-xl mx-auto px-4 py-8">
       {/* Header */}
-      <div className="text-center mb-8">
+      <div className="text-center mb-6">
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gold/10 mb-3">
           <span className="text-3xl">🏆</span>
         </div>
@@ -46,14 +68,22 @@ export default async function LeaderboardPage() {
         </p>
       </div>
 
+      {/* Filter */}
+      <div className="mb-6">
+        <LeaderboardFilter currentMonth={now.getMonth() + 1} currentYear={now.getFullYear()} />
+        <p className="text-center text-xs text-navy/40 font-body mt-2">
+          {isCurrentMonth ? "This month so far" : `${MONTHS[month - 1]} ${year}`}
+        </p>
+      </div>
+
       {entries.length === 0 ? (
         <div className="text-center py-16">
           <p className="text-4xl mb-3">✨</p>
-          <p className="font-body text-navy/50">No activity recorded yet. Be the first!</p>
+          <p className="font-body text-navy/50">No activity recorded for this period.</p>
         </div>
       ) : (
         <>
-          {/* Top 3 podium */}
+          {/* Top 3 */}
           {top3.length > 0 && (
             <div className="space-y-3 mb-6">
               {top3.map((entry) => {
@@ -90,7 +120,7 @@ export default async function LeaderboardPage() {
             </div>
           )}
 
-          {/* Rest of leaderboard */}
+          {/* Rest */}
           {rest.length > 0 && (
             <div className="bg-white rounded-2xl border border-cream-dark divide-y divide-cream-dark overflow-hidden">
               {rest.map((entry) => {

@@ -1,11 +1,20 @@
 "use client";
 
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function DailyLoginTrigger() {
+  const router = useRouter();
+
   useEffect(() => {
-    // Fire-and-forget daily login point — server is idempotent
-    fetch("/api/points/daily-login", { method: "POST" }).catch(() => {});
+    fetch("/api/points/daily-login", { method: "POST" })
+      .then((r) => r.json())
+      .then((data) => {
+        // If points were actually awarded, refresh so the nav bar reflects the new total
+        if (data.awarded) router.refresh();
+      })
+      .catch(() => {});
   }, []);
+
   return null;
 }

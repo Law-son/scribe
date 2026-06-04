@@ -82,34 +82,34 @@ export default async function DashboardPage() {
 
         <div className="space-y-3">
 
-          {/* Sermon card — dark dramatic */}
+          {/* Sermon card — gold */}
           <Link href={latestSermon ? `/sermons/${latestSermon._id}` : "/sermons"} className="group block">
-            <div className="relative overflow-hidden rounded-2xl bg-navy min-h-[110px] flex items-center px-6 py-5">
+            <div className="relative overflow-hidden rounded-2xl bg-gold min-h-[110px] flex items-center px-6 py-5">
               {/* background cross motif */}
-              <svg className="absolute right-4 top-1/2 -translate-y-1/2 w-24 h-24 text-white/5" viewBox="0 0 100 100" fill="currentColor">
+              <svg className="absolute right-4 top-1/2 -translate-y-1/2 w-24 h-24 text-navy/8" viewBox="0 0 100 100" fill="currentColor">
                 <rect x="42" y="5" width="16" height="90" rx="4"/>
                 <rect x="5" y="35" width="90" height="16" rx="4"/>
               </svg>
 
               {/* icon bubble */}
-              <div className="w-11 h-11 rounded-xl bg-gold/20 flex items-center justify-center flex-shrink-0 mr-4">
-                <svg className="w-5 h-5 text-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <div className="w-11 h-11 rounded-xl bg-navy/15 flex items-center justify-center flex-shrink-0 mr-4">
+                <svg className="w-5 h-5 text-navy" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
                   <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
                 </svg>
               </div>
 
               <div className="flex-1 min-w-0 relative z-10">
-                <p className="text-gold/70 text-xs font-body uppercase tracking-widest mb-0.5">Latest Sermon</p>
-                <p className="font-heading text-cream font-semibold text-base leading-snug truncate">
+                <p className="text-navy/50 text-xs font-body uppercase tracking-widest mb-0.5">Latest Sermon</p>
+                <p className="font-heading text-navy font-semibold text-base leading-snug truncate">
                   {latestSermon?.title ?? "No sermons yet"}
                 </p>
                 {latestSermon?.preacher && (
-                  <p className="text-cream/50 text-xs font-body mt-0.5">{latestSermon.preacher}</p>
+                  <p className="text-navy/60 text-xs font-body mt-0.5">{latestSermon.preacher}</p>
                 )}
               </div>
 
-              <svg className="w-5 h-5 text-cream/30 group-hover:text-gold/60 transition-colors ml-3 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg className="w-5 h-5 text-navy/30 group-hover:text-navy/60 transition-colors ml-3 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="m9 18 6-6-6-6"/>
               </svg>
             </div>
@@ -118,41 +118,41 @@ export default async function DashboardPage() {
           {/* Devotional + Bible Study — side by side */}
           <div className="grid grid-cols-2 gap-3">
 
-            {/* Devotional — warm ivory */}
+            {/* Devotional — forest green */}
             <Link href={latestDevotional ? `/devotionals/${latestDevotional._id}` : "/devotionals"} className="group block">
-              <div className="relative overflow-hidden rounded-2xl bg-cream border border-cream-dark h-full p-5">
+              <div className="relative overflow-hidden rounded-2xl bg-forest h-full p-5">
                 {/* leaf motif */}
-                <svg className="absolute -bottom-3 -right-3 w-20 h-20 text-forest/8" viewBox="0 0 100 100" fill="currentColor">
+                <svg className="absolute -bottom-3 -right-3 w-20 h-20 text-white/5" viewBox="0 0 100 100" fill="currentColor">
                   <path d="M90 10 C90 10 10 20 20 90 C20 90 80 70 90 10Z"/>
                 </svg>
 
-                <div className="w-10 h-10 rounded-xl bg-forest/10 flex items-center justify-center mb-3">
-                  <svg className="w-5 h-5 text-forest" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center mb-3">
+                  <svg className="w-5 h-5 text-cream" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/>
                   </svg>
                 </div>
 
-                <p className="text-forest/70 text-xs font-body uppercase tracking-widest mb-1">Devotional</p>
-                <p className="font-heading text-navy font-semibold text-sm leading-snug line-clamp-2 relative z-10">
+                <p className="text-cream/50 text-xs font-body uppercase tracking-widest mb-1">Devotional</p>
+                <p className="font-heading text-cream font-semibold text-sm leading-snug line-clamp-2 relative z-10">
                   {latestDevotional?.title ?? "No devotional today"}
                 </p>
                 {latestDevotional?.verse && (
-                  <p className="text-navy/40 text-xs font-body mt-1 truncate relative z-10">{latestDevotional.verse}</p>
+                  <p className="text-cream/40 text-xs font-body mt-1 truncate relative z-10">{latestDevotional.verse}</p>
                 )}
               </div>
             </Link>
 
-            {/* Bible Study — burgundy accent */}
+            {/* Bible Study — navy */}
             <Link href={latestBibleStudy ? `/bible-study/${latestBibleStudy._id}` : "/bible-study"} className="group block">
-              <div className="relative overflow-hidden rounded-2xl bg-burgundy h-full p-5">
+              <div className="relative overflow-hidden rounded-2xl bg-navy h-full p-5">
                 {/* ornament */}
                 <svg className="absolute -top-4 -right-4 w-20 h-20 text-white/5" viewBox="0 0 100 100" fill="currentColor">
                   <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="8"/>
                   <circle cx="50" cy="50" r="28" fill="none" stroke="currentColor" strokeWidth="4"/>
                 </svg>
 
-                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center mb-3">
-                  <svg className="w-5 h-5 text-cream" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <div className="w-10 h-10 rounded-xl bg-gold/15 flex items-center justify-center mb-3">
+                  <svg className="w-5 h-5 text-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20"/>
                     <path d="m9 10 2 2 4-4"/>
                   </svg>

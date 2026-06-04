@@ -12,11 +12,9 @@ export default async function AdminAnnouncementsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="font-heading text-3xl text-navy font-bold">Announcements</h1>
-        </div>
-        <Link href="/admin/announcements/new" className="inline-flex items-center gap-2 bg-navy text-cream font-body text-sm px-4 py-2 rounded-lg hover:bg-navy-light transition-colors">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-8">
+        <h1 className="font-heading text-3xl text-navy font-bold">Announcements</h1>
+        <Link href="/admin/announcements/new" className="inline-flex items-center justify-center gap-2 bg-navy text-cream font-body text-sm px-4 py-2 rounded-lg hover:bg-navy-light transition-colors sm:w-auto w-full">
           + New Announcement
         </Link>
       </div>

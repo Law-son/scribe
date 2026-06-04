@@ -68,7 +68,7 @@ export function MemberNav({ userName, totalPoints, role }: MemberNavProps) {
           {role === "admin" && (
             <Link
               href="/admin"
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg mb-0.5 text-sm font-body text-amber hover:bg-white/5 mt-2 border-t border-navy-light/30 pt-3"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg mb-0.5 text-sm font-body font-medium text-amber bg-amber/10 hover:bg-amber/15 mt-3 border border-amber/20 transition-colors"
             >
               <span className="text-base">⚙️</span>
               Admin Portal

@@ -116,7 +116,7 @@ export function AdminNav({ userName }: AdminNavProps) {
         <div className="px-5 py-5 border-b border-white/5">
           <Link
             href="/dashboard"
-            className="flex items-center gap-1.5 text-cream/40 text-xs font-body hover:text-cream/70 transition-colors mb-4"
+            className="inline-flex items-center gap-1.5 text-xs font-body font-medium text-cream/60 hover:text-gold hover:bg-white/5 transition-colors mb-4 px-2 py-1 rounded-md -ml-2"
           >
             <ChevronLeft size={14} />
             Member View
