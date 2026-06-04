@@ -15,6 +15,12 @@ const MEMBER_PREFIXES = [
   "/leaderboard",
   "/api/points",
   "/api/users",
+  "/api/sermons",
+  "/api/bible-study",
+  "/api/devotionals",
+  "/api/quotes",
+  "/api/announcements",
+  "/api/evangelism",
 ];
 
 const ADMIN_PREFIXES = ["/admin"];
@@ -71,6 +77,12 @@ export const config = {
     "/leaderboard/:path*",
     "/api/points/:path*",
     "/api/users/:path*",
+    "/api/sermons/:path*",
+    "/api/bible-study/:path*",
+    "/api/devotionals/:path*",
+    "/api/quotes/:path*",
+    "/api/announcements/:path*",
+    "/api/evangelism/:path*",
     "/admin/:path*",
   ],
 };
