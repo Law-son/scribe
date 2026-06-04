@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import connectDB from "@/lib/db";
 import BibleStudy from "@/models/BibleStudy";
+import { broadcastToAllMembers, SMS_TEMPLATES } from "@/lib/sms";
 
 export async function GET(
   _req: NextRequest,
@@ -36,9 +37,17 @@ export async function PATCH(
   const doc = await BibleStudy.findById(id);
   if (!doc) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  if (body.status === "published" && doc.status !== "published") body.publishedAt = new Date();
+  const wasPublished = doc.status === "published";
+  if (body.status === "published" && !wasPublished) body.publishedAt = new Date();
   Object.assign(doc, body);
   await doc.save();
+
+  // Fire SMS when transitioning from draft → published
+  if (body.status === "published" && !wasPublished) {
+    const url = `${process.env.NEXT_PUBLIC_APP_URL}/bible-study/${doc._id}`;
+    Promise.resolve().then(() => broadcastToAllMembers(SMS_TEMPLATES.bibleStudy(url)));
+  }
+
   return NextResponse.json({ id: doc._id.toString() });
 }
 

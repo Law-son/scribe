@@ -24,14 +24,11 @@ export async function PUT(req: NextRequest) {
   const now = new Date();
 
   if (current) {
-    // Archive annual theme if year+theme changed
+    // Archive annual theme if year or theme text changed
     const newAnnual = body.annualTheme;
     const oldAnnual = current.annualTheme;
-    if (
-      newAnnual &&
-      oldAnnual &&
-      (oldAnnual.year !== newAnnual.year || oldAnnual.theme !== newAnnual.theme)
-    ) {
+    if (newAnnual && oldAnnual && oldAnnual.theme &&
+        (oldAnnual.year !== newAnnual.year || oldAnnual.theme !== newAnnual.theme)) {
       historyEntries.push({
         type: "annual",
         label: `${oldAnnual.year} Annual Theme`,
@@ -45,8 +42,9 @@ export async function PUT(req: NextRequest) {
     const newMonthly: { month: number; year: number; theme: string }[] = body.monthlyThemes ?? [];
     const oldMonthly: { month: number; year: number; theme: string }[] = current.monthlyThemes ?? [];
     for (const oldM of oldMonthly) {
+      if (!oldM.theme) continue;
       const newM = newMonthly.find((m) => m.month === oldM.month && m.year === oldM.year);
-      if (newM && newM.theme !== oldM.theme && oldM.theme) {
+      if (newM && newM.theme !== oldM.theme) {
         const monthName = new Date(oldM.year, oldM.month - 1).toLocaleString("default", { month: "long" });
         historyEntries.push({
           type: "monthly",
@@ -61,8 +59,9 @@ export async function PUT(req: NextRequest) {
     const newSemesters: { semester: number; year: number; theme: string }[] = body.semesterThemes ?? [];
     const oldSemesters: { semester: number; year: number; theme: string }[] = current.semesterThemes ?? [];
     for (const oldS of oldSemesters) {
+      if (!oldS.theme) continue;
       const newS = newSemesters.find((s) => s.semester === oldS.semester && s.year === oldS.year);
-      if (newS && newS.theme !== oldS.theme && oldS.theme) {
+      if (newS && newS.theme !== oldS.theme) {
         historyEntries.push({
           type: "semester",
           label: `Semester ${oldS.semester} — ${oldS.year}`,
@@ -73,22 +72,21 @@ export async function PUT(req: NextRequest) {
     }
   }
 
-  const update: Record<string, unknown> = {
+  // Build the update — keep $set and $push as siblings, never nested
+  const setFields = {
     socialLinks: body.socialLinks ?? {},
     annualTheme: body.annualTheme,
     monthlyThemes: body.monthlyThemes ?? [],
     semesterThemes: body.semesterThemes ?? [],
   };
 
-  if (historyEntries.length > 0) {
-    update.$push = { themeHistory: { $each: historyEntries } };
-  }
+  const mongoUpdate = historyEntries.length > 0
+    ? { $set: setFields, $push: { themeHistory: { $each: historyEntries } } }
+    : { $set: setFields };
 
   const doc = await SiteSettings.findOneAndUpdate(
     { key: "main" },
-    historyEntries.length > 0
-      ? { $set: update, $push: { themeHistory: { $each: historyEntries } } }
-      : { $set: update },
+    mongoUpdate,
     { upsert: true, new: true }
   );
 

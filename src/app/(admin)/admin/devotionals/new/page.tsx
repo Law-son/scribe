@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/Input";
+import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
 import { BibleVersePicker } from "@/components/ui/BibleVersePicker";
 import { RichTextEditor } from "@/components/editor/RichTextEditor";
@@ -21,6 +22,7 @@ export default function NewDevotionalPage() {
     dayNumber: "",
     weekNumber: "",
     weekTheme: "",
+    status: "pending",
   });
 
   useEffect(() => {
@@ -54,10 +56,11 @@ export default function NewDevotionalPage() {
           verseText: verse?.text,
           verseTranslation: verse?.translation,
           content,
+          status: form.status,
         }),
       });
       if (!res.ok) { toast.error("Failed to create"); return; }
-      toast.success("Devotional saved. Awaiting approval.");
+      toast.success(form.status === "draft" ? "Saved as draft." : "Devotional saved. Awaiting approval.");
       router.push("/admin/devotionals");
     } catch { toast.error("Network error"); } finally { setLoading(false); }
   }
@@ -120,7 +123,19 @@ export default function NewDevotionalPage() {
           <RichTextEditor value={content} onChange={setContent} placeholder="Write the devotional message…" />
         </div>
 
-        <Button type="submit" loading={loading} size="lg">Save Devotional</Button>
+        <div className="flex items-center gap-4">
+          <Select
+            value={form.status}
+            onChange={(e) => set("status", e.target.value)}
+            options={[
+              { value: "draft", label: "Save as Draft" },
+              { value: "pending", label: "Submit for Approval" },
+            ]}
+          />
+          <Button type="submit" loading={loading} size="lg">
+            {form.status === "draft" ? "Save Draft" : "Submit"}
+          </Button>
+        </div>
       </form>
     </div>
   );

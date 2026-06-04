@@ -63,7 +63,11 @@ export default async function AdminDevotionalsPage({
                       ) : "—"}
                     </td>
                     <td className="px-5 py-4">
-                      <Badge variant={d.status === "approved" ? "green" : d.status === "rejected" ? "burgundy" : "gold"}>
+                      <Badge variant={
+                        d.status === "approved" ? "green" :
+                        d.status === "rejected" ? "burgundy" :
+                        d.status === "draft" ? "gray" : "gold"
+                      }>
                         {d.status}
                       </Badge>
                     </td>

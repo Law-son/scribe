@@ -12,8 +12,8 @@ export default async function ReportsPage() {
   const [topSermons, topBibleStudies, topDevotionals, topEvangelists] = await Promise.all([
     Sermon.find({ status: "published" }).sort({ viewsCount: -1 }).limit(5).select("title preacher viewsCount likesCount").lean(),
     BibleStudy.find({ status: "published" }).sort({ viewsCount: -1 }).limit(5).select("title topic viewsCount likesCount").lean(),
-    Devotional.find({ status: "approved" }).sort({ viewsCount: -1 }).limit(5).select("title viewsCount likesCount").lean(),
-    User.find({ role: "member" }).sort({ totalPoints: -1 }).limit(10).select("name totalPoints").lean(),
+    Devotional.find({ status: "approved" }).sort({ viewsCount: -1 }).limit(5).select("topic title dayNumber viewsCount likesCount").lean(),
+    User.find().sort({ totalPoints: -1 }).limit(10).select("name totalPoints").lean(),
   ]);
 
   return (
@@ -55,8 +55,7 @@ export default async function ReportsPage() {
                 <div key={b._id.toString()} className="flex items-center gap-3">
                   <span className="text-lg w-6">{["🥇", "🥈", "🥉", "4️⃣", "5️⃣"][i]}</span>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-body font-medium text-navy truncate">{b.title}</p>
-                    <p className="text-xs text-navy/50 font-body">{b.topic}</p>
+                    <p className="text-sm font-body font-medium text-navy truncate">{b.topic ?? b.title}</p>
                   </div>
                   <div className="text-right text-xs text-navy/60 font-body">
                     <p>👁 {b.viewsCount ?? 0}</p>
@@ -75,7 +74,10 @@ export default async function ReportsPage() {
               {topDevotionals.map((d, i) => (
                 <div key={d._id.toString()} className="flex items-center gap-3">
                   <span className="text-lg w-6">{["🥇", "🥈", "🥉", "4️⃣", "5️⃣"][i]}</span>
-                  <p className="flex-1 text-sm font-body font-medium text-navy truncate">{d.title}</p>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-body font-medium text-navy truncate">{d.topic ?? d.title}</p>
+                    {d.dayNumber && <p className="text-xs text-navy/50 font-body">Day {d.dayNumber}</p>}
+                  </div>
                   <span className="text-xs text-navy/60 font-body">👁 {d.viewsCount ?? 0}</span>
                 </div>
               ))}

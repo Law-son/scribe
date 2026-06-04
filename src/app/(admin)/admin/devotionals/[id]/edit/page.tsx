@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Input } from "@/components/ui/Input";
+import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
 import { BibleVersePicker } from "@/components/ui/BibleVersePicker";
 import { RichTextEditor } from "@/components/editor/RichTextEditor";
@@ -24,6 +25,7 @@ export default function EditDevotionalPage() {
     dayNumber: "",
     weekNumber: "",
     weekTheme: "",
+    status: "pending",
   });
 
   useEffect(() => {
@@ -38,6 +40,7 @@ export default function EditDevotionalPage() {
           dayNumber: String(data.dayNumber ?? ""),
           weekNumber: data.weekNumber ?? "",
           weekTheme: data.weekTheme ?? "",
+          status: data.status ?? "pending",
         });
         if (data.verse) {
           setVerse({
@@ -135,6 +138,16 @@ export default function EditDevotionalPage() {
         {content !== null && <RichTextEditor value={content} onChange={setContent} />}
 
         <div className="flex items-center gap-4">
+          {(form.status === "draft" || form.status === "pending") && (
+            <Select
+              value={form.status}
+              onChange={(e) => set("status", e.target.value)}
+              options={[
+                { value: "draft", label: "Keep as Draft" },
+                { value: "pending", label: "Submit for Approval" },
+              ]}
+            />
+          )}
           <Button type="submit" loading={loading}>Save Changes</Button>
           <Button type="button" variant="danger" onClick={handleDelete} className="ml-auto">Delete</Button>
         </div>

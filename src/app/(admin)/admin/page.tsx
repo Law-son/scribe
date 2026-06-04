@@ -82,9 +82,9 @@ export default async function AdminDashboard() {
     pendingConverts,
     weeklyTop5,
   ] = await Promise.all([
-    User.countDocuments({ role: "member" }),
-    User.countDocuments({ role: "member", lastLoginAt: { $gte: thirtyDaysAgo } }),
-    User.countDocuments({ role: "member", createdAt: { $gte: monthStart } }),
+    User.countDocuments({}),
+    User.countDocuments({ lastLoginAt: { $gte: thirtyDaysAgo } }),
+    User.countDocuments({ createdAt: { $gte: monthStart } }),
     Sermon.countDocuments({ status: "published", publishedAt: { $gte: monthStart } }),
     Sermon.countDocuments({ status: "published", publishedAt: { $gte: yearStart } }),
     BibleStudy.countDocuments({ status: "published", publishedAt: { $gte: monthStart } }),

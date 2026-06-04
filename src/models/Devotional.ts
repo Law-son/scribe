@@ -10,7 +10,7 @@ export interface IDevotional extends Document {
   verseTranslation?: string;
   content: object; // Tiptap JSON
   scheduledAt: Date;
-  status: "pending" | "approved" | "rejected";
+  status: "draft" | "pending" | "approved" | "rejected";
   approvedBy?: mongoose.Types.ObjectId;
   approvedAt?: Date;
   likes: mongoose.Types.ObjectId[];
@@ -36,7 +36,7 @@ const DevotionalSchema = new Schema<IDevotional>(
     scheduledAt: { type: Date, default: Date.now },
     status: {
       type: String,
-      enum: ["pending", "approved", "rejected"],
+      enum: ["draft", "pending", "approved", "rejected"],
       default: "pending",
     },
     approvedBy: { type: Schema.Types.ObjectId, ref: "User" },

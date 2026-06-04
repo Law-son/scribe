@@ -13,6 +13,7 @@ const CreateSchema = z.object({
   verseText: z.string().optional(),
   verseTranslation: z.string().optional(),
   content: z.object({}).passthrough(),
+  status: z.enum(["draft", "pending"]).optional(),
 });
 
 export async function GET(req: NextRequest) {
@@ -55,6 +56,8 @@ export async function POST(req: NextRequest) {
   const dayNumber = data.dayNumber ?? totalExisting + 1;
   const weekNumber = data.weekNumber ?? String(Math.ceil(dayNumber / 7)).padStart(2, "0");
 
+  const status = data.status ?? "pending";
+
   const doc = await Devotional.create({
     ...data,
     dayNumber,
@@ -62,7 +65,7 @@ export async function POST(req: NextRequest) {
     title: data.topic, // keep title in sync for legacy reads
     scheduledAt: new Date(),
     authorId: userId,
-    status: "pending",
+    status,
   });
 
   return NextResponse.json({ id: doc._id.toString() }, { status: 201 });
