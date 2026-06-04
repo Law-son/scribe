@@ -11,9 +11,12 @@ export async function GET(
   const { id } = await params;
   const headersList = await headers();
   const userId = headersList.get("x-user-id");
+  const role = headersList.get("x-user-role");
 
   await connectDB();
-  const sermon = await Sermon.findOne({ _id: id, status: "published" }).lean();
+  // Admins can view any sermon (including drafts); members only see published
+  const query = role === "admin" ? { _id: id } : { _id: id, status: "published" };
+  const sermon = await Sermon.findOne(query).lean();
   if (!sermon) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const isLiked = userId

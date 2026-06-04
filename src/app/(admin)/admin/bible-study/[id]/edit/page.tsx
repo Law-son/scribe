@@ -19,11 +19,17 @@ export default function EditBibleStudyPage() {
   const [form, setForm] = useState({ title: "", topic: "", date: "", category: "", status: "draft" });
 
   useEffect(() => {
-    fetch(`/api/bible-study/${id}`).then((r) => r.json()).then((data) => {
-      setForm({ title: data.title ?? "", topic: data.topic ?? "", date: data.date ? data.date.slice(0, 10) : "", category: data.category ?? "", status: data.status ?? "draft" });
-      setContent(data.content ?? null);
-      setFetching(false);
-    });
+    fetch(`/api/bible-study/${id}`)
+      .then(async (r) => {
+        if (!r.ok) throw new Error(`${r.status}`);
+        return r.json();
+      })
+      .then((data) => {
+        setForm({ title: data.title ?? "", topic: data.topic ?? "", date: data.date ? data.date.slice(0, 10) : "", category: data.category ?? "", status: data.status ?? "draft" });
+        setContent(data.content ?? null);
+      })
+      .catch(() => toast.error("Failed to load content"))
+      .finally(() => setFetching(false));
   }, [id]);
 
   function set(k: string, v: string) { setForm((f) => ({ ...f, [k]: v })); }

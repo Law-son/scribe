@@ -18,11 +18,17 @@ export default function EditDevotionalPage() {
   const [form, setForm] = useState({ title: "", verse: "", verseText: "", scheduledAt: "" });
 
   useEffect(() => {
-    fetch(`/api/devotionals/${id}`).then((r) => r.json()).then((data) => {
-      setForm({ title: data.title ?? "", verse: data.verse ?? "", verseText: data.verseText ?? "", scheduledAt: data.scheduledAt ? data.scheduledAt.slice(0, 16) : "" });
-      setContent(data.content ?? null);
-      setFetching(false);
-    });
+    fetch(`/api/devotionals/${id}`)
+      .then(async (r) => {
+        if (!r.ok) throw new Error(`${r.status}`);
+        return r.json();
+      })
+      .then((data) => {
+        setForm({ title: data.title ?? "", verse: data.verse ?? "", verseText: data.verseText ?? "", scheduledAt: data.scheduledAt ? data.scheduledAt.slice(0, 16) : "" });
+        setContent(data.content ?? null);
+      })
+      .catch(() => toast.error("Failed to load devotional"))
+      .finally(() => setFetching(false));
   }, [id]);
 
   function set(k: string, v: string) { setForm((f) => ({ ...f, [k]: v })); }

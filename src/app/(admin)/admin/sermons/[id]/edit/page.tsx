@@ -23,7 +23,10 @@ export default function EditSermonPage() {
 
   useEffect(() => {
     fetch(`/api/sermons/${id}`)
-      .then((r) => r.json())
+      .then(async (r) => {
+        if (!r.ok) throw new Error(`${r.status}`);
+        return r.json();
+      })
       .then((data) => {
         setForm({
           title: data.title ?? "",
@@ -35,6 +38,7 @@ export default function EditSermonPage() {
         });
         setContent(data.content ?? null);
       })
+      .catch(() => toast.error("Failed to load sermon"))
       .finally(() => setFetching(false));
   }, [id]);
 

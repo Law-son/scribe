@@ -10,9 +10,12 @@ export async function GET(
   const { id } = await params;
   const headersList = await headers();
   const userId = headersList.get("x-user-id");
+  const role = headersList.get("x-user-role");
 
   await connectDB();
-  const doc = await BibleStudy.findOne({ _id: id, status: "published" }).lean();
+  // Admins can view any document (including drafts); members only see published
+  const query = role === "admin" ? { _id: id } : { _id: id, status: "published" };
+  const doc = await BibleStudy.findOne(query).lean();
   if (!doc) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const isLiked = userId ? doc.likes.some((l) => l.toString() === userId) : false;
