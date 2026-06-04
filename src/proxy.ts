@@ -13,6 +13,7 @@ const MEMBER_PREFIXES = [
   "/announcements",
   "/evangelism",
   "/leaderboard",
+  "/api/points",
 ];
 
 const ADMIN_PREFIXES = ["/admin"];
@@ -67,6 +68,7 @@ export const config = {
     "/announcements/:path*",
     "/evangelism/:path*",
     "/leaderboard/:path*",
+    "/api/points/:path*",
     "/admin/:path*",
   ],
 };
