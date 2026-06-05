@@ -78,7 +78,11 @@ export default function AdminSettingsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ socialLinks, customSocialLinks, annualTheme, monthlyThemes, semesterThemes }),
       });
-      if (!res.ok) { toast.error("Failed to save"); return; }
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        toast.error(errData.error ?? "Failed to save");
+        return;
+      }
       toast.success("Settings saved!");
       fetch("/api/admin/settings").then((r) => r.json()).then((data) => {
         if (data.themeHistory) setThemeHistory(data.themeHistory);

@@ -56,9 +56,9 @@ const SiteSettingsSchema = new Schema<ISiteSettings>(
     },
     customSocialLinks: [
       {
-        platform: { type: String, required: true },
-        label: { type: String, required: true },
-        url: { type: String, required: true },
+        platform: { type: String, default: "" },
+        label: { type: String, default: "" },
+        url: { type: String, default: "" },
         _id: false,
       },
     ],
