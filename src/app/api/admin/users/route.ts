@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { headers } from "next/headers";
 import connectDB from "@/lib/db";
 import User from "@/models/User";
+import { getCurrentUser } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
-  const headersList = await headers();
-  if (headersList.get("x-user-role") !== "admin") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const user = await getCurrentUser();
+  if (!user || user.role !== "admin") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   await connectDB();
   const { searchParams } = req.nextUrl;

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { headers } from "next/headers";
 import { startOfMonth, startOfYear, subDays } from "date-fns";
+import { getCurrentUser } from "@/lib/auth";
 import connectDB from "@/lib/db";
 import User from "@/models/User";
 import Sermon from "@/models/Sermon";
@@ -10,10 +10,8 @@ import Announcement from "@/models/Announcement";
 import Convert from "@/models/Convert";
 
 export async function GET() {
-  const headersList = await headers();
-  if (headersList.get("x-user-role") !== "admin") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const user = await getCurrentUser();
+  if (!user || user.role !== "admin") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   await connectDB();
 

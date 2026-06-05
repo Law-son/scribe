@@ -23,7 +23,7 @@ const MEMBER_PREFIXES = [
   "/api/evangelism",
 ];
 
-const ADMIN_PREFIXES = ["/admin"];
+const ADMIN_PREFIXES = ["/admin", "/api/admin"];
 
 async function verifyToken(token: string) {
   const { payload } = await jwtVerify(token, secret);
@@ -38,9 +38,11 @@ export async function proxy(request: NextRequest) {
 
   if (!needsMember && !needsAdmin) return NextResponse.next();
 
+  const isApiRoute = pathname.startsWith("/api/");
   const token = request.cookies.get("scribe_token")?.value;
 
   if (!token) {
+    if (isApiRoute) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("from", pathname);
     return NextResponse.redirect(loginUrl);
@@ -50,6 +52,7 @@ export async function proxy(request: NextRequest) {
     const payload = await verifyToken(token);
 
     if (needsAdmin && payload.role !== "admin") {
+      if (isApiRoute) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
 
@@ -59,6 +62,7 @@ export async function proxy(request: NextRequest) {
     response.headers.set("x-user-name", payload.name);
     return response;
   } catch {
+    if (isApiRoute) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("from", pathname);
     return NextResponse.redirect(loginUrl);
@@ -83,6 +87,7 @@ export const config = {
     "/api/quotes/:path*",
     "/api/announcements/:path*",
     "/api/evangelism/:path*",
+    "/api/admin/:path*",
     "/admin/:path*",
   ],
 };

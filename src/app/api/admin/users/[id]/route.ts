@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { headers } from "next/headers";
 import { z } from "zod";
 import connectDB from "@/lib/db";
 import User from "@/models/User";
+import { getCurrentUser } from "@/lib/auth";
 
 const UpdateSchema = z.object({
   name: z.string().min(2).optional(),
@@ -12,14 +12,18 @@ const UpdateSchema = z.object({
   membershipType: z.enum(["member", "visitor", "invitee", "convert"]).optional(),
 });
 
+async function guard() {
+  const user = await getCurrentUser();
+  if (!user || user.role !== "admin") return false;
+  return true;
+}
+
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  if (!(await guard())) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const { id } = await params;
-  const headersList = await headers();
-  if (headersList.get("x-user-role") !== "admin") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-
   await connectDB();
   const user = await User.findById(id).select("-password").lean();
   if (!user) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -30,10 +34,8 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  if (!(await guard())) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const { id } = await params;
-  const headersList = await headers();
-  if (headersList.get("x-user-role") !== "admin") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-
   const body = await req.json();
   const parsed = UpdateSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: "Invalid input" }, { status: 400 });
