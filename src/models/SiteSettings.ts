@@ -8,16 +8,21 @@ export interface IThemeHistoryEntry {
   archivedAt: Date;
 }
 
+export interface ICustomSocialLink {
+  platform: string;
+  label: string;
+  url: string;
+}
+
 export interface ISiteSettings extends Document {
   key: string; // always "main" — singleton
   socialLinks: {
     facebook?: string;
     instagram?: string;
-    twitter?: string;
-    youtube?: string;
     tiktok?: string;
     whatsapp?: string;
   };
+  customSocialLinks: ICustomSocialLink[];
   annualTheme?: {
     year: number;
     theme: string;
@@ -46,11 +51,17 @@ const SiteSettingsSchema = new Schema<ISiteSettings>(
     socialLinks: {
       facebook: String,
       instagram: String,
-      twitter: String,
-      youtube: String,
       tiktok: String,
       whatsapp: String,
     },
+    customSocialLinks: [
+      {
+        platform: { type: String, required: true },
+        label: { type: String, required: true },
+        url: { type: String, required: true },
+        _id: false,
+      },
+    ],
     annualTheme: {
       year: Number,
       theme: String,

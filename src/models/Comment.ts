@@ -5,6 +5,9 @@ export interface IComment extends Document {
   contentId: mongoose.Types.ObjectId;
   authorId: mongoose.Types.ObjectId;
   text: string;
+  parentId?: mongoose.Types.ObjectId;
+  likes: mongoose.Types.ObjectId[];
+  likesCount: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -19,11 +22,14 @@ const CommentSchema = new Schema<IComment>(
     contentId: { type: Schema.Types.ObjectId, required: true },
     authorId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     text: { type: String, required: true, trim: true, maxlength: 1000 },
+    parentId: { type: Schema.Types.ObjectId, ref: "Comment", default: null },
+    likes: [{ type: Schema.Types.ObjectId, ref: "User" }],
+    likesCount: { type: Number, default: 0 },
   },
   { timestamps: true }
 );
 
-CommentSchema.index({ contentType: 1, contentId: 1, createdAt: -1 });
+CommentSchema.index({ contentType: 1, contentId: 1, parentId: 1, createdAt: -1 });
 CommentSchema.index({ authorId: 1 });
 
 const Comment: Model<IComment> =

@@ -5,15 +5,16 @@ import toast from "react-hot-toast";
 interface Props {
   title: string;
   url?: string; // defaults to window.location.href
+  text?: string; // optional body text (used for quotes)
 }
 
-export function ShareButton({ title, url }: Props) {
+export function ShareButton({ title, url, text }: Props) {
   async function handleShare() {
     const shareUrl = url ?? window.location.href;
 
     if (navigator.share) {
       try {
-        await navigator.share({ title, url: shareUrl });
+        await navigator.share({ title, url: shareUrl, ...(text ? { text } : {}) });
       } catch {
         // User cancelled — do nothing
       }

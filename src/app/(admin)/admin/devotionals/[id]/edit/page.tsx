@@ -138,13 +138,13 @@ export default function EditDevotionalPage() {
         {content !== null && <RichTextEditor value={content} onChange={setContent} />}
 
         <div className="flex items-center gap-4">
-          {(form.status === "draft" || form.status === "pending") && (
+          {form.status === "draft" && (
             <Select
               value={form.status}
               onChange={(e) => set("status", e.target.value)}
               options={[
                 { value: "draft", label: "Keep as Draft" },
-                { value: "pending", label: "Submit for Approval" },
+                { value: "approved", label: "Publish" },
               ]}
             />
           )}

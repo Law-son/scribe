@@ -60,7 +60,7 @@ export default function NewDevotionalPage() {
         }),
       });
       if (!res.ok) { toast.error("Failed to create"); return; }
-      toast.success(form.status === "draft" ? "Saved as draft." : "Devotional saved. Awaiting approval.");
+      toast.success(form.status === "draft" ? "Saved as draft." : "Devotional published!");
       router.push("/admin/devotionals");
     } catch { toast.error("Network error"); } finally { setLoading(false); }
   }
@@ -72,9 +72,6 @@ export default function NewDevotionalPage() {
         <span className="text-navy/30">/</span>
         <h1 className="font-heading text-2xl text-navy font-bold">New Devotional</h1>
       </div>
-      <p className="text-sm text-navy/60 font-body mb-6 bg-gold/10 border border-gold/30 rounded-lg px-4 py-3">
-        📋 Devotionals require admin approval before they become visible to members.
-      </p>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="bg-white border border-cream-dark rounded-xl p-6 space-y-4">
           <BibleVersePicker value={verse} onChange={setVerse} label="Main Scripture Reference" />
@@ -129,11 +126,11 @@ export default function NewDevotionalPage() {
             onChange={(e) => set("status", e.target.value)}
             options={[
               { value: "draft", label: "Save as Draft" },
-              { value: "pending", label: "Submit for Approval" },
+              { value: "approved", label: "Publish" },
             ]}
           />
           <Button type="submit" loading={loading} size="lg">
-            {form.status === "draft" ? "Save Draft" : "Submit"}
+            {form.status === "draft" ? "Save Draft" : "Publish"}
           </Button>
         </div>
       </form>

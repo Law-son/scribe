@@ -4,8 +4,6 @@ import connectDB from "@/lib/db";
 import Devotional from "@/models/Devotional";
 import { Badge } from "@/components/ui/Badge";
 import { TablePagination } from "@/components/ui/TablePagination";
-import { ApproveDevotionalButton } from "./ApproveDevotionalButton";
-
 export const metadata = { title: "Manage Devotionals" };
 
 const PAGE_SIZE = 20;
@@ -71,10 +69,7 @@ export default async function AdminDevotionalsPage({
                         {d.status}
                       </Badge>
                     </td>
-                    <td className="px-5 py-4 text-right flex items-center justify-end gap-3">
-                      {d.status === "pending" && (
-                        <ApproveDevotionalButton id={d._id.toString()} />
-                      )}
+                    <td className="px-5 py-4 text-right">
                       <Link href={`/admin/devotionals/${d._id}/edit`} className="text-sm text-gold-dark hover:underline font-body">Edit</Link>
                     </td>
                   </tr>

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Avatar } from "@/components/ui/Avatar";
+import { Logo } from "@/components/ui/Logo";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 
@@ -41,9 +42,14 @@ export function MemberNav({ userName, totalPoints, role }: MemberNavProps) {
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex flex-col fixed left-0 top-0 h-full w-64 bg-navy text-cream z-40">
         {/* Brand */}
-        <div className="px-6 py-6 border-b border-navy-light/30">
-          <h1 className="font-heading text-xl text-gold font-bold">UCM Scribe</h1>
-          <p className="text-xs text-cream/60 mt-0.5 font-body">Digital Faith Platform</p>
+        <div className="px-6 py-5 border-b border-navy-light/30">
+          <div className="flex items-center gap-3">
+            <Logo size={36} />
+            <div>
+              <h1 className="font-heading text-lg text-gold font-bold leading-tight">UCM Scribe</h1>
+              <p className="text-[10px] text-cream/60 font-body">Digital Faith Platform</p>
+            </div>
+          </div>
         </div>
 
         {/* Nav links */}
@@ -96,7 +102,10 @@ export function MemberNav({ userName, totalPoints, role }: MemberNavProps) {
 
       {/* Mobile top bar */}
       <header className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-navy flex items-center justify-between px-4 z-40">
-        <h1 className="font-heading text-lg text-gold font-bold">UCM Scribe</h1>
+        <div className="flex items-center gap-2.5">
+          <Logo size={28} />
+          <h1 className="font-heading text-base text-gold font-bold">UCM Scribe</h1>
+        </div>
         <div className="flex items-center gap-3">
           <span className="text-xs text-gold font-body">{totalPoints} pts</span>
           <button

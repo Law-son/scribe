@@ -6,7 +6,11 @@ export interface IAnnouncement extends Document {
   isUrgent: boolean;
   smsTriggered: boolean;
   smsSentAt?: Date;
-  expiresAt?: Date;
+  // SMS progress tracking
+  smsTotal: number;
+  smsSent: number;
+  smsFailed: number;
+  smsDone: boolean;
   authorId: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
@@ -15,18 +19,20 @@ export interface IAnnouncement extends Document {
 const AnnouncementSchema = new Schema<IAnnouncement>(
   {
     title: { type: String, required: true, trim: true },
-    body: { type: String, required: true },
+    body: { type: String, required: true, maxlength: 160 },
     isUrgent: { type: Boolean, default: false },
     smsTriggered: { type: Boolean, default: false },
     smsSentAt: { type: Date },
-    expiresAt: { type: Date },
+    smsTotal: { type: Number, default: 0 },
+    smsSent: { type: Number, default: 0 },
+    smsFailed: { type: Number, default: 0 },
+    smsDone: { type: Boolean, default: false },
     authorId: { type: Schema.Types.ObjectId, ref: "User", required: true },
   },
   { timestamps: true }
 );
 
 AnnouncementSchema.index({ createdAt: -1 });
-AnnouncementSchema.index({ expiresAt: 1 }, { sparse: true });
 
 const Announcement: Model<IAnnouncement> =
   mongoose.models.Announcement ||

@@ -17,10 +17,20 @@ export default function EditUserPage() {
   const [form, setForm] = useState({ name: "", role: "member", isActive: true, location: "", membershipType: "member" });
 
   useEffect(() => {
-    fetch(`/api/admin/users/${id}`).then((r) => r.json()).then((data) => {
-      setForm({ name: data.name ?? "", role: data.role ?? "member", isActive: data.isActive ?? true, location: data.location ?? "", membershipType: data.membershipType ?? "member" });
-      setFetching(false);
-    });
+    fetch(`/api/admin/users/${id}`)
+      .then(async (r) => {
+        if (!r.ok) throw new Error("Failed to load user");
+        const data = await r.json();
+        setForm({
+          name: data.name ?? "",
+          role: data.role ?? "member",
+          isActive: data.isActive ?? true,
+          location: data.location ?? "",
+          membershipType: data.membershipType ?? "member",
+        });
+      })
+      .catch(() => toast.error("Failed to load user details"))
+      .finally(() => setFetching(false));
   }, [id]);
 
   function set(k: string, v: string | boolean) { setForm((f) => ({ ...f, [k]: v })); }

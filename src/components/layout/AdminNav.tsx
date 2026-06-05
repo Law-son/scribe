@@ -21,6 +21,7 @@ import {
   X,
   ChevronLeft,
 } from "lucide-react";
+import { Logo } from "@/components/ui/Logo";
 
 const sections = [
   {
@@ -127,9 +128,7 @@ export function AdminNav({ userName }: AdminNavProps) {
             Member View
           </Link>
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-gold/20 flex items-center justify-center">
-              <span className="text-gold text-xs font-heading font-bold">UC</span>
-            </div>
+            <Logo size={32} />
             <div>
               <p className="font-heading text-sm font-bold text-cream">Admin Portal</p>
               <p className="text-[10px] text-cream/40 font-body">UCM Scribe</p>
@@ -163,9 +162,7 @@ export function AdminNav({ userName }: AdminNavProps) {
       {/* ── Mobile top bar ── */}
       <header className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-[#0D1B2E] flex items-center justify-between px-4 z-40 border-b border-white/5">
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-md bg-gold/20 flex items-center justify-center">
-            <span className="text-gold text-[10px] font-heading font-bold">UC</span>
-          </div>
+          <Logo size={28} />
           <span className="font-heading text-sm text-cream font-bold">Admin Portal</span>
         </div>
         <button

@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import connectDB from "./db";
 import Comment from "@/models/Comment";
 import User from "@/models/User";
+import { sendSMS } from "./sms";
 import type { PointAction } from "@/types";
 
 type ContentType = "sermon" | "bible_study" | "devotional" | "quote";
@@ -50,17 +51,60 @@ export async function getComments(contentType: ContentType, contentId: string) {
   });
 }
 
+const CONTENT_TYPE_LABEL: Record<ContentType, string> = {
+  sermon: "sermon",
+  bible_study: "bible study",
+  devotional: "devotional",
+  quote: "quote",
+};
+
+const CONTENT_TYPE_PATH: Record<ContentType, string> = {
+  sermon: "sermons",
+  bible_study: "bible-study",
+  devotional: "devotionals",
+  quote: "quotes",
+};
+
+function appUrl() {
+  return (process.env.NEXT_PUBLIC_APP_URL ?? process.env.APP_URL ?? "").replace(/\/$/, "");
+}
+
 export async function postComment(
   contentType: ContentType,
   contentId: string,
   userId: string,
-  text: string
+  text: string,
+  parentId?: string,
+  contentTitle?: string
 ) {
   await connectDB();
+
+  const commentData: Record<string, unknown> = { contentType, contentId, authorId: userId, text };
+  if (parentId) commentData.parentId = parentId;
+
   const [comment, user] = await Promise.all([
-    Comment.create({ contentType, contentId, authorId: userId, text }),
+    Comment.create(commentData),
     User.findById(userId).select("name").lean(),
   ]);
+
+  // Notify parent comment author on reply (fire-and-forget)
+  if (parentId) {
+    (async () => {
+      try {
+        const parent = await Comment.findById(parentId).populate<{ authorId: { _id: mongoose.Types.ObjectId; name: string; phone: string } }>("authorId", "name phone").lean();
+        const parentAuthor = parent?.authorId;
+        if (parentAuthor?.phone && parentAuthor._id.toString() !== userId) {
+          const typeLabel = CONTENT_TYPE_LABEL[contentType];
+          const link = `${appUrl()}/${CONTENT_TYPE_PATH[contentType]}/${contentId}`;
+          const title = contentTitle ? ` "${contentTitle}"` : "";
+          await sendSMS(
+            [parentAuthor.phone],
+            `Hello, ${user?.name ?? "Someone"} replied to your comment on ${typeLabel}${title}. Here: ${link}`
+          );
+        }
+      } catch {}
+    })();
+  }
 
   return NextResponse.json(
     {
@@ -68,7 +112,11 @@ export async function postComment(
       text: comment.text,
       authorId: userId,
       authorName: user?.name ?? "Member",
-      createdAt: comment.createdAt,
+      createdAt: comment.createdAt.toISOString(),
+      parentId: parentId ?? null,
+      likesCount: 0,
+      isLiked: false,
+      replies: [],
     },
     { status: 201 }
   );

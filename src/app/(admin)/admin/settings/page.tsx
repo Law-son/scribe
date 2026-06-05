@@ -7,13 +7,12 @@ import toast from "react-hot-toast";
 import { format } from "date-fns";
 
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-const SOCIAL_PLATFORMS = [
-  { key: "facebook", label: "Facebook", placeholder: "https://facebook.com/..." },
-  { key: "instagram", label: "Instagram", placeholder: "https://instagram.com/..." },
-  { key: "twitter", label: "Twitter / X", placeholder: "https://x.com/..." },
-  { key: "youtube", label: "YouTube", placeholder: "https://youtube.com/..." },
+
+const CORE_PLATFORMS = [
   { key: "tiktok", label: "TikTok", placeholder: "https://tiktok.com/@..." },
   { key: "whatsapp", label: "WhatsApp", placeholder: "https://wa.me/..." },
+  { key: "facebook", label: "Facebook", placeholder: "https://facebook.com/..." },
+  { key: "instagram", label: "Instagram", placeholder: "https://instagram.com/..." },
 ];
 
 const currentYear = new Date().getFullYear();
@@ -26,11 +25,18 @@ interface ThemeHistoryEntry {
   archivedAt: string;
 }
 
+interface CustomSocialLink {
+  platform: string;
+  label: string;
+  url: string;
+}
+
 export default function AdminSettingsPage() {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
 
   const [socialLinks, setSocialLinks] = useState<Record<string, string>>({});
+  const [customSocialLinks, setCustomSocialLinks] = useState<CustomSocialLink[]>([]);
   const [annualTheme, setAnnualTheme] = useState({ year: currentYear, theme: "", scripture: "" });
   const [monthlyThemes, setMonthlyThemes] = useState<{ month: number; year: number; theme: string }[]>(
     MONTHS.map((_, i) => ({ month: i + 1, year: currentYear, theme: "" }))
@@ -46,6 +52,7 @@ export default function AdminSettingsPage() {
       .then((r) => r.json())
       .then((data) => {
         if (data.socialLinks) setSocialLinks(data.socialLinks);
+        if (data.customSocialLinks) setCustomSocialLinks(data.customSocialLinks);
         if (data.annualTheme) setAnnualTheme({ year: data.annualTheme.year ?? currentYear, theme: data.annualTheme.theme ?? "", scripture: data.annualTheme.scripture ?? "" });
         if (data.monthlyThemes?.length) {
           setMonthlyThemes(
@@ -69,15 +76,34 @@ export default function AdminSettingsPage() {
       const res = await fetch("/api/admin/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ socialLinks, annualTheme, monthlyThemes, semesterThemes }),
+        body: JSON.stringify({ socialLinks, customSocialLinks, annualTheme, monthlyThemes, semesterThemes }),
       });
       if (!res.ok) { toast.error("Failed to save"); return; }
       toast.success("Settings saved!");
-      // Refresh history
       fetch("/api/admin/settings").then((r) => r.json()).then((data) => {
         if (data.themeHistory) setThemeHistory(data.themeHistory);
       });
     } catch { toast.error("Network error"); } finally { setLoading(false); }
+  }
+
+  function addCustomLink() {
+    setCustomSocialLinks((prev) => [...prev, { platform: "", label: "", url: "" }]);
+  }
+
+  function updateCustomLink(i: number, field: keyof CustomSocialLink, value: string) {
+    setCustomSocialLinks((prev) => {
+      const updated = [...prev];
+      updated[i] = { ...updated[i], [field]: value };
+      // Auto-fill platform from label
+      if (field === "label" && !updated[i].platform) {
+        updated[i].platform = value.toLowerCase().replace(/\s+/g, "");
+      }
+      return updated;
+    });
+  }
+
+  function removeCustomLink(i: number) {
+    setCustomSocialLinks((prev) => prev.filter((_, idx) => idx !== i));
   }
 
   if (fetching) return (
@@ -96,9 +122,12 @@ export default function AdminSettingsPage() {
       <form onSubmit={handleSave} className="space-y-8">
         {/* Social Media Links */}
         <section className="bg-white border border-cream-dark rounded-xl p-6">
-          <h2 className="font-heading text-lg text-navy font-bold mb-4">Social Media Links</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {SOCIAL_PLATFORMS.map(({ key, label, placeholder }) => (
+          <h2 className="font-heading text-lg text-navy font-bold mb-1">Social Media Links</h2>
+          <p className="text-xs text-navy/50 font-body mb-4">These appear on the home page and all content pages.</p>
+
+          {/* Core 4 */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+            {CORE_PLATFORMS.map(({ key, label, placeholder }) => (
               <Input
                 key={key}
                 label={label}
@@ -109,6 +138,59 @@ export default function AdminSettingsPage() {
               />
             ))}
           </div>
+
+          {/* Custom platforms */}
+          {customSocialLinks.length > 0 && (
+            <div className="space-y-3 mb-4">
+              <p className="text-xs font-body font-semibold text-navy/50 uppercase tracking-wider">Custom Platforms</p>
+              {customSocialLinks.map((link, i) => (
+                <div key={i} className="flex gap-2 items-start">
+                  <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <Input
+                      label="Platform name"
+                      placeholder="e.g. YouTube"
+                      value={link.label}
+                      onChange={(e) => updateCustomLink(i, "label", e.target.value)}
+                    />
+                    <Input
+                      label="Identifier"
+                      placeholder="e.g. youtube"
+                      value={link.platform}
+                      onChange={(e) => updateCustomLink(i, "platform", e.target.value.toLowerCase().replace(/\s+/g, ""))}
+                    />
+                    <Input
+                      label="URL"
+                      type="url"
+                      placeholder="https://..."
+                      value={link.url}
+                      onChange={(e) => updateCustomLink(i, "url", e.target.value)}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeCustomLink(i)}
+                    className="mt-6 p-2 text-navy/40 hover:text-red-500 transition-colors"
+                    aria-label="Remove"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={addCustomLink}
+            className="flex items-center gap-2 text-sm font-body text-navy/60 hover:text-navy border border-dashed border-cream-dark rounded-lg px-4 py-2.5 transition-colors w-full justify-center"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            Add Custom Platform
+          </button>
         </section>
 
         {/* Annual Theme */}

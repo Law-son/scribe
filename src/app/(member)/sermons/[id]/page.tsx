@@ -8,17 +8,30 @@ import { BibleVerseModal } from "@/components/content/BibleVerseModal";
 import { LikeButton } from "@/components/content/LikeButton";
 import { ShareButton } from "@/components/content/ShareButton";
 import { CommentSection } from "@/components/content/CommentSection";
+import { SocialSidebar } from "@/components/content/SocialSidebar";
 import { Badge } from "@/components/ui/Badge";
 import { ReadingProgress } from "@/components/content/ReadingProgress";
 import { ViewTracker } from "@/components/content/ViewTracker";
 import { format } from "date-fns";
 import Link from "next/link";
+import type { SerializedComment } from "@/types";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   await connectDB();
   const sermon = await Sermon.findById(id).select("title preacher").lean();
-  return { title: sermon ? `${sermon.title} — ${sermon.preacher}` : "Sermon" };
+  if (!sermon) return { title: "Sermon" };
+
+  const title = `${sermon.title} — ${sermon.preacher}`;
+  const description = `A sermon by ${sermon.preacher} on UCM Scribe.`;
+  const url = `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/sermons/${id}`;
+
+  return {
+    title,
+    description,
+    openGraph: { title, description, url, type: "article" },
+    twitter: { card: "summary", title, description },
+  };
 }
 
 export default async function SermonPage({ params }: { params: Promise<{ id: string }> }) {
@@ -28,11 +41,11 @@ export default async function SermonPage({ params }: { params: Promise<{ id: str
 
   await connectDB();
 
-  const [sermon, comments] = await Promise.all([
+  const [sermon, allComments] = await Promise.all([
     Sermon.findOne({ _id: id, status: "published" }).lean(),
     Comment.find({ contentType: "sermon", contentId: id })
       .sort({ createdAt: -1 })
-      .limit(50)
+      .limit(100)
       .populate("authorId", "name")
       .lean(),
   ]);
@@ -41,15 +54,30 @@ export default async function SermonPage({ params }: { params: Promise<{ id: str
 
   const isLiked = userId ? sermon.likes.some((l) => l.toString() === userId) : false;
 
-  const serializedComments = comments.map((c) => ({
-    id: c._id.toString(),
-    text: c.text,
-    authorId: c.authorId._id?.toString() ?? c.authorId.toString(),
-    authorName: (c.authorId as unknown as { name?: string }).name ?? "Member",
-    createdAt: c.createdAt.toISOString(),
+  function serializeComment(c: (typeof allComments)[0]): SerializedComment {
+    return {
+      id: c._id.toString(),
+      text: c.text,
+      authorId: c.authorId._id?.toString() ?? c.authorId.toString(),
+      authorName: (c.authorId as unknown as { name?: string }).name ?? "Member",
+      createdAt: c.createdAt.toISOString(),
+      parentId: c.parentId?.toString(),
+      likesCount: c.likesCount ?? 0,
+      isLiked: userId ? (c.likes ?? []).some((l) => l.toString() === userId) : false,
+      replies: [],
+    };
+  }
+
+  const roots = allComments.filter((c) => !c.parentId);
+  const replies = allComments.filter((c) => c.parentId);
+  const serializedComments: SerializedComment[] = roots.map((root) => ({
+    ...serializeComment(root),
+    replies: replies
+      .filter((r) => r.parentId?.toString() === root._id.toString())
+      .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
+      .map(serializeComment),
   }));
 
-  // Estimate reading time
   const wordCount = JSON.stringify(sermon.content).split(/\s+/).length;
   const readingTime = Math.max(1, Math.ceil(wordCount / 200));
 
@@ -59,24 +87,20 @@ export default async function SermonPage({ params }: { params: Promise<{ id: str
       <ViewTracker contentType="sermons" contentId={id} />
 
       <article className="max-w-2xl mx-auto px-4 py-8 lg:py-12">
-        {/* Breadcrumb */}
         <nav className="mb-6">
           <Link href="/sermons" className="text-sm text-navy/50 font-body hover:text-navy">
             ← All Sermons
           </Link>
         </nav>
 
-        {/* Tags */}
         <div className="flex flex-wrap gap-2 mb-4">
           {sermon.tags?.map((tag) => <Badge key={tag} variant="navy">{tag}</Badge>)}
         </div>
 
-        {/* Title */}
         <h1 className="font-heading text-3xl sm:text-4xl text-navy font-bold leading-tight mb-4">
           {sermon.title}
         </h1>
 
-        {/* Meta */}
         <div className="flex flex-wrap items-center gap-4 text-sm text-navy/60 font-body mb-8 pb-6 border-b border-cream-dark">
           <span className="font-medium text-navy">{sermon.preacher}</span>
           <span>·</span>
@@ -87,7 +111,6 @@ export default async function SermonPage({ params }: { params: Promise<{ id: str
           <span>👁 {sermon.viewsCount ?? 0}</span>
         </div>
 
-        {/* Video embed */}
         {sermon.videoUrl && (
           <div className="mb-8 rounded-xl overflow-hidden aspect-video bg-navy">
             <iframe
@@ -99,12 +122,10 @@ export default async function SermonPage({ params }: { params: Promise<{ id: str
           </div>
         )}
 
-        {/* Content */}
         <BibleVerseModal>
           <RichTextRenderer content={sermon.content} className="mb-10" />
         </BibleVerseModal>
 
-        {/* Actions */}
         <div className="flex items-center gap-4 py-6 border-t border-b border-cream-dark mb-8">
           <LikeButton
             contentType="sermons"
@@ -124,11 +145,13 @@ export default async function SermonPage({ params }: { params: Promise<{ id: str
           <ShareButton title={sermon.title} />
         </div>
 
-        {/* Comments */}
+        <SocialSidebar />
+
         <CommentSection
           contentType="sermons"
           contentId={id}
           initialComments={serializedComments}
+          currentUserId={userId ?? undefined}
         />
       </article>
     </>

@@ -75,6 +75,7 @@ export async function PUT(req: NextRequest) {
   // Build the update — keep $set and $push as siblings, never nested
   const setFields = {
     socialLinks: body.socialLinks ?? {},
+    customSocialLinks: body.customSocialLinks ?? [],
     annualTheme: body.annualTheme,
     monthlyThemes: body.monthlyThemes ?? [],
     semesterThemes: body.semesterThemes ?? [],

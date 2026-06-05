@@ -56,7 +56,8 @@ export async function POST(req: NextRequest) {
   const dayNumber = data.dayNumber ?? totalExisting + 1;
   const weekNumber = data.weekNumber ?? String(Math.ceil(dayNumber / 7)).padStart(2, "0");
 
-  const status = data.status ?? "pending";
+  // "draft" stays draft; anything else goes straight to approved (no manual review)
+  const status = data.status === "draft" ? "draft" : "approved";
 
   const doc = await Devotional.create({
     ...data,

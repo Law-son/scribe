@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import connectDB from "@/lib/db";
 import Quote from "@/models/Quote";
 import { LikeButton } from "@/components/content/LikeButton";
+import { ShareButton } from "@/components/content/ShareButton";
 
 export const metadata = { title: "Quotes" };
 
@@ -30,14 +31,20 @@ export default async function QuotesPage() {
                 <p className="font-heading text-xl text-navy-dark italic leading-relaxed mb-4">
                   &ldquo;{q.text}&rdquo;
                 </p>
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-2">
                   <span className="text-sm font-body text-gold-dark font-medium">— {q.author}</span>
-                  <LikeButton
-                    contentType="quotes"
-                    contentId={q._id.toString()}
-                    initialLiked={isLiked}
-                    initialCount={q.likesCount}
-                  />
+                  <div className="flex items-center gap-2">
+                    <LikeButton
+                      contentType="quotes"
+                      contentId={q._id.toString()}
+                      initialLiked={isLiked}
+                      initialCount={q.likesCount}
+                    />
+                    <ShareButton
+                      title={`"${q.text}" — ${q.author}`}
+                      text={`"${q.text}" — ${q.author}`}
+                    />
+                  </div>
                 </div>
               </div>
             );

@@ -101,6 +101,10 @@ export interface SerializedComment {
   authorName: string;
   text: string;
   createdAt: string;
+  parentId?: string;
+  likesCount: number;
+  isLiked: boolean;
+  replies: SerializedComment[];
 }
 
 export interface LeaderboardEntry {

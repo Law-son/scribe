@@ -37,6 +37,12 @@ export async function PATCH(
   if (headersList.get("x-user-role") !== "admin") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const body = await req.json();
+
+  // Auto-approve: if being moved out of draft, skip the "pending" step
+  if (body.status && body.status !== "draft" && body.status !== "approved" && body.status !== "rejected") {
+    body.status = "approved";
+  }
+
   await connectDB();
   const doc = await Devotional.findByIdAndUpdate(id, body, { new: true });
   if (!doc) return NextResponse.json({ error: "Not found" }, { status: 404 });

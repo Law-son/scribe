@@ -9,8 +9,28 @@ import { BibleVerseModal } from "@/components/content/BibleVerseModal";
 import { LikeButton } from "@/components/content/LikeButton";
 import { ShareButton } from "@/components/content/ShareButton";
 import { CommentSection } from "@/components/content/CommentSection";
+import { SocialSidebar } from "@/components/content/SocialSidebar";
 import { ReadingProgress } from "@/components/content/ReadingProgress";
 import { ViewTracker } from "@/components/content/ViewTracker";
+import type { SerializedComment } from "@/types";
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  await connectDB();
+  const doc = await Devotional.findOne({ _id: id, status: "approved" as const }).select("title topic verse").lean();
+  if (!doc) return { title: "Devotional" };
+
+  const title = doc.topic ?? doc.title ?? "Devotional";
+  const description = doc.verse ? `${title} — ${doc.verse}` : title;
+  const url = `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/devotionals/${id}`;
+
+  return {
+    title,
+    description,
+    openGraph: { title, description, url, type: "article" },
+    twitter: { card: "summary", title, description },
+  };
+}
 
 export default async function DevotionalDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -19,15 +39,43 @@ export default async function DevotionalDetailPage({ params }: { params: Promise
   const now = new Date();
 
   await connectDB();
-  const [doc, comments] = await Promise.all([
+  const [doc, allComments] = await Promise.all([
     Devotional.findOne({ _id: id, status: "approved" as const, scheduledAt: { $lte: now } }).lean(),
-    Comment.find({ contentType: "devotional", contentId: id }).sort({ createdAt: -1 }).limit(50).populate("authorId", "name").lean(),
+    Comment.find({ contentType: "devotional", contentId: id })
+      .sort({ createdAt: -1 })
+      .limit(100)
+      .populate("authorId", "name")
+      .lean(),
   ]);
 
   if (!doc) notFound();
 
   const isLiked = userId ? doc.likes.some((l) => l.toString() === userId) : false;
   const displayTitle = doc.topic ?? doc.title ?? "Devotional";
+
+  function serializeComment(c: (typeof allComments)[0]): SerializedComment {
+    return {
+      id: c._id.toString(),
+      text: c.text,
+      authorId: c.authorId._id?.toString() ?? c.authorId.toString(),
+      authorName: (c.authorId as unknown as { name?: string }).name ?? "Member",
+      createdAt: c.createdAt.toISOString(),
+      parentId: c.parentId?.toString(),
+      likesCount: c.likesCount ?? 0,
+      isLiked: userId ? (c.likes ?? []).some((l) => l.toString() === userId) : false,
+      replies: [],
+    };
+  }
+
+  const roots = allComments.filter((c) => !c.parentId);
+  const replies = allComments.filter((c) => c.parentId);
+  const serializedComments: SerializedComment[] = roots.map((root) => ({
+    ...serializeComment(root),
+    replies: replies
+      .filter((r) => r.parentId?.toString() === root._id.toString())
+      .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
+      .map(serializeComment),
+  }));
 
   return (
     <>
@@ -38,7 +86,6 @@ export default async function DevotionalDetailPage({ params }: { params: Promise
           <Link href="/devotionals" className="text-sm text-navy/50 font-body hover:text-navy">← Devotionals</Link>
         </nav>
 
-        {/* Day / Week metadata */}
         {doc.dayNumber ? (
           <div className="flex items-center gap-3 mb-3 flex-wrap">
             <span className="inline-flex items-center gap-1.5 bg-navy/8 text-navy text-xs font-body font-semibold px-3 py-1.5 rounded-full">
@@ -77,16 +124,13 @@ export default async function DevotionalDetailPage({ params }: { params: Promise
           <ShareButton title={displayTitle} />
         </div>
 
+        <SocialSidebar />
+
         <CommentSection
           contentType="devotionals"
           contentId={id}
-          initialComments={comments.map((c) => ({
-            id: c._id.toString(),
-            text: c.text,
-            authorId: c.authorId._id?.toString() ?? c.authorId.toString(),
-            authorName: (c.authorId as unknown as { name?: string }).name ?? "Member",
-            createdAt: c.createdAt.toISOString(),
-          }))}
+          initialComments={serializedComments}
+          currentUserId={userId ?? undefined}
         />
       </article>
     </>

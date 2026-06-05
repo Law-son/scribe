@@ -3,22 +3,19 @@ import { headers } from "next/headers";
 import { z } from "zod";
 import connectDB from "@/lib/db";
 import Announcement from "@/models/Announcement";
-import { broadcastToAllMembers, SMS_TEMPLATES } from "@/lib/sms";
+import { broadcastWithProgress, SMS_TEMPLATES } from "@/lib/sms";
+import User from "@/models/User";
 
 const CreateSchema = z.object({
   title: z.string().min(1).max(200),
-  body: z.string().min(1),
+  body: z.string().min(1).max(160),
   isUrgent: z.boolean().default(false),
-  expiresAt: z.string().optional(),
 });
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   await connectDB();
-  const now = new Date();
 
-  const data = await Announcement.find({
-    $or: [{ expiresAt: { $exists: false } }, { expiresAt: { $gt: now } }],
-  })
+  const data = await Announcement.find()
     .sort({ isUrgent: -1, createdAt: -1 })
     .limit(50)
     .lean();
@@ -39,13 +36,47 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) return NextResponse.json({ error: "Invalid input" }, { status: 400 });
 
   await connectDB();
-  const doc = await Announcement.create({ ...parsed.data, authorId: userId });
 
-  // Send SMS for urgent announcements or all announcements (fire-and-forget)
-  Promise.resolve().then(async () => {
-    await broadcastToAllMembers(SMS_TEMPLATES.announcement(doc.title, doc.body));
-    await Announcement.findByIdAndUpdate(doc._id, { smsTriggered: true, smsSentAt: new Date() });
+  // Get all active members' phone numbers upfront so we know the total
+  const users = await User.find({ isActive: true }).select("phone").lean();
+  const numbers = users.map((u) => u.phone).filter(Boolean) as string[];
+
+  const doc = await Announcement.create({
+    ...parsed.data,
+    authorId: userId,
+    smsTriggered: true,
+    smsTotal: numbers.length,
+    smsSent: 0,
+    smsFailed: 0,
+    smsDone: numbers.length === 0, // done immediately if no members
   });
 
-  return NextResponse.json({ id: doc._id.toString() }, { status: 201 });
+  const announcementId = doc._id.toString();
+  const message = SMS_TEMPLATES.announcement(doc.title, doc.body);
+
+  if (numbers.length > 0) {
+    // Fire-and-forget background job — updates DB progress after every batch of 10
+    Promise.resolve().then(async () => {
+      try {
+        await broadcastWithProgress(numbers, message, async (sent, failed) => {
+          await Announcement.findByIdAndUpdate(announcementId, {
+            smsSent: sent,
+            smsFailed: failed,
+          });
+        });
+        await Announcement.findByIdAndUpdate(announcementId, {
+          smsDone: true,
+          smsSentAt: new Date(),
+        });
+      } catch (err) {
+        console.error("[SMS] Announcement broadcast failed:", err);
+        await Announcement.findByIdAndUpdate(announcementId, { smsDone: true });
+      }
+    });
+  }
+
+  return NextResponse.json(
+    { id: announcementId, total: numbers.length },
+    { status: 201 }
+  );
 }

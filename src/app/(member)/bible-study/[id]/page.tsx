@@ -9,9 +9,29 @@ import { BibleVerseModal } from "@/components/content/BibleVerseModal";
 import { LikeButton } from "@/components/content/LikeButton";
 import { ShareButton } from "@/components/content/ShareButton";
 import { CommentSection } from "@/components/content/CommentSection";
+import { SocialSidebar } from "@/components/content/SocialSidebar";
 import { ReadingProgress } from "@/components/content/ReadingProgress";
 import { ViewTracker } from "@/components/content/ViewTracker";
 import { format } from "date-fns";
+import type { SerializedComment } from "@/types";
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  await connectDB();
+  const doc = await BibleStudy.findOne({ _id: id, status: "published" }).select("title topic").lean();
+  if (!doc) return { title: "Bible Study" };
+
+  const title = doc.topic ?? doc.title ?? "Bible Study";
+  const description = `Bible study notes: ${title} — UCM Scribe`;
+  const url = `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/bible-study/${id}`;
+
+  return {
+    title,
+    description,
+    openGraph: { title, description, url, type: "article" },
+    twitter: { card: "summary", title, description },
+  };
+}
 
 export default async function BibleStudyDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -19,14 +39,42 @@ export default async function BibleStudyDetailPage({ params }: { params: Promise
   const userId = headersList.get("x-user-id");
 
   await connectDB();
-  const [doc, comments] = await Promise.all([
+  const [doc, allComments] = await Promise.all([
     BibleStudy.findOne({ _id: id, status: "published" }).lean(),
-    Comment.find({ contentType: "bible_study", contentId: id }).sort({ createdAt: -1 }).limit(50).populate("authorId", "name").lean(),
+    Comment.find({ contentType: "bible_study", contentId: id })
+      .sort({ createdAt: -1 })
+      .limit(100)
+      .populate("authorId", "name")
+      .lean(),
   ]);
 
   if (!doc) notFound();
 
   const isLiked = userId ? doc.likes.some((l) => l.toString() === userId) : false;
+
+  function serializeComment(c: (typeof allComments)[0]): SerializedComment {
+    return {
+      id: c._id.toString(),
+      text: c.text,
+      authorId: c.authorId._id?.toString() ?? c.authorId.toString(),
+      authorName: (c.authorId as unknown as { name?: string }).name ?? "Member",
+      createdAt: c.createdAt.toISOString(),
+      parentId: c.parentId?.toString(),
+      likesCount: c.likesCount ?? 0,
+      isLiked: userId ? (c.likes ?? []).some((l) => l.toString() === userId) : false,
+      replies: [],
+    };
+  }
+
+  const roots = allComments.filter((c) => !c.parentId);
+  const replies = allComments.filter((c) => c.parentId);
+  const serializedComments: SerializedComment[] = roots.map((root) => ({
+    ...serializeComment(root),
+    replies: replies
+      .filter((r) => r.parentId?.toString() === root._id.toString())
+      .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
+      .map(serializeComment),
+  }));
 
   return (
     <>
@@ -45,16 +93,14 @@ export default async function BibleStudyDetailPage({ params }: { params: Promise
           <LikeButton contentType="bible-study" contentId={id} initialLiked={isLiked} initialCount={doc.likesCount} />
           <ShareButton title={doc.topic ?? doc.title ?? "Bible Study"} />
         </div>
+
+        <SocialSidebar />
+
         <CommentSection
           contentType="bible-study"
           contentId={id}
-          initialComments={comments.map((c) => ({
-            id: c._id.toString(),
-            text: c.text,
-            authorId: c.authorId._id?.toString() ?? c.authorId.toString(),
-            authorName: (c.authorId as unknown as { name?: string }).name ?? "Member",
-            createdAt: c.createdAt.toISOString(),
-          }))}
+          initialComments={serializedComments}
+          currentUserId={userId ?? undefined}
         />
       </article>
     </>
