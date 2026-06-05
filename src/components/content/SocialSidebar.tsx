@@ -11,10 +11,6 @@ async function getSettings() {
   }
 }
 
-function currentSemester() {
-  return new Date().getMonth() < 6 ? 1 : 2;
-}
-
 export async function SocialSidebar() {
   const settings = await getSettings();
 
@@ -32,8 +28,7 @@ export async function SocialSidebar() {
   const allLinks = [...coreLinks, ...customLinks];
 
   const annualTheme = settings?.annualTheme;
-  const sem = currentSemester();
-  const semesterTheme = settings?.semesterThemes?.find((s) => s.semester === sem);
+  const semesterTheme = settings?.semesterTheme;
 
   const hasThemes = (annualTheme?.theme || semesterTheme?.theme);
   const hasLinks = allLinks.length > 0;
@@ -61,7 +56,7 @@ export async function SocialSidebar() {
           {semesterTheme?.theme && (
             <div className="flex-1 min-w-[200px] bg-gold/8 border border-gold/20 rounded-xl px-5 py-4">
               <p className="text-[10px] font-body font-semibold uppercase tracking-widest text-gold-dark/70 mb-1">
-                Semester {sem} Theme
+                Semester Theme{semesterTheme.year ? ` ${semesterTheme.year}` : ""}
               </p>
               <p className="font-heading text-navy font-semibold leading-snug">
                 {semesterTheme.theme}

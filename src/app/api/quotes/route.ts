@@ -4,6 +4,7 @@ import { z } from "zod";
 import connectDB from "@/lib/db";
 import Quote from "@/models/Quote";
 import { broadcastToAllMembers, SMS_TEMPLATES } from "@/lib/sms";
+import { logActivity } from "@/lib/logActivity";
 
 const CreateSchema = z.object({
   text: z.string().min(1).max(1000),
@@ -43,6 +44,15 @@ export async function POST(req: NextRequest) {
 
   await connectDB();
   const doc = await Quote.create({ ...parsed.data, authorId: userId });
+  const actorName = headersList.get("x-user-name") ?? "Admin";
+  logActivity({
+    actorId: userId,
+    actorName,
+    action: parsed.data.status === "published" ? `Published quote by ${doc.author}` : `Saved quote draft by ${doc.author}`,
+    targetType: "quote",
+    targetId: doc._id.toString(),
+    targetLabel: `"${doc.text.slice(0, 60)}…"`,
+  });
 
   if (parsed.data.status === "published") {
     const url = `${process.env.NEXT_PUBLIC_APP_URL}/quotes`;

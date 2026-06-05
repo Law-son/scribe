@@ -1,113 +1,192 @@
 "use client";
 
-import { useState } from "react";
-import { Input } from "@/components/ui/Input";
-import { Button } from "@/components/ui/Button";
+import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/Badge";
-import toast from "react-hot-toast";
+import { format, formatDistanceToNow } from "date-fns";
 
-interface Convert { id: string; name: string; phone?: string; status: string; createdAt: string; }
+interface ReferredUser {
+  id: string;
+  name: string;
+  membershipType: string;
+  totalPoints: number;
+  lastLoginAt: string | null;
+  isActive: boolean;
+  activityCount: number;
+  recentlyActive: boolean;
+  joinedAt: string;
+}
+
+interface RegisteredConvert {
+  id: string;
+  name: string;
+  phone: string | null;
+  status: string;
+  createdAt: string;
+  verifiedAt: string | null;
+}
+
+const convertStatusColor: Record<string, "gold" | "green" | "burgundy"> = {
+  pending: "gold",
+  verified: "green",
+  rejected: "burgundy",
+};
 
 export default function EvangelismPage() {
-  const [converts, setConverts] = useState<Convert[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [form, setForm] = useState({ name: "", phone: "", address: "", notes: "" });
-  const [loaded, setLoaded] = useState(false);
+  const [referredUsers, setReferredUsers] = useState<ReferredUser[]>([]);
+  const [registeredConverts, setRegisteredConverts] = useState<RegisteredConvert[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  async function loadMyConverts() {
-    if (loaded) return;
-    setLoading(true);
-    const res = await fetch("/api/evangelism");
-    const data = await res.json();
-    setConverts(data.data ?? []);
-    setLoaded(true);
-    setLoading(false);
-  }
+  useEffect(() => {
+    fetch("/api/evangelism/my-converts")
+      .then((r) => r.json())
+      .then((data) => {
+        setReferredUsers(data.referredUsers ?? []);
+        setRegisteredConverts(data.registeredConverts ?? []);
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
-  // Load on mount
-  useState(() => { loadMyConverts(); });
-
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!form.name.trim()) return;
-    setSubmitting(true);
-    try {
-      const res = await fetch("/api/evangelism", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-      if (!res.ok) { toast.error("Failed to register"); return; }
-      const { id } = await res.json();
-      toast.success("Convert registered! Awaiting admin verification.");
-      setConverts((prev) => [{ id, name: form.name, phone: form.phone, status: "pending", createdAt: new Date().toISOString() }, ...prev]);
-      setForm({ name: "", phone: "", address: "", notes: "" });
-    } catch {
-      toast.error("Network error");
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
-  const statusColors: Record<string, "gold" | "green" | "burgundy"> = {
-    pending: "gold",
-    verified: "green",
-    rejected: "burgundy",
-  };
+  const totalVerified = registeredConverts.filter((c) => c.status === "verified").length;
+  const activePlatformMembers = referredUsers.filter((u) => u.recentlyActive).length;
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="font-heading text-3xl text-navy font-bold">Evangelism</h1>
+    <div className="max-w-3xl mx-auto px-4 py-8 space-y-10">
+
+      {/* Header */}
+      <div>
+        <h1 className="font-heading text-3xl text-navy font-bold">My Evangelism</h1>
         <p className="text-navy/60 font-body mt-1">
-          Register souls you&apos;ve led to Christ. Earn +15 points upon admin verification.
+          Track the souls you&apos;ve reached and their growth on the platform.
         </p>
       </div>
 
-      {/* Register form */}
-      <div className="bg-white border border-cream-dark rounded-2xl p-7 mb-8">
-        <h2 className="font-heading text-xl text-navy font-semibold mb-5">Register a New Convert</h2>
-        <form onSubmit={submit} className="space-y-4">
-          <Input label="Full Name *" placeholder="Convert's full name" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} required />
-          <Input label="Phone Number" placeholder="+233…" value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} />
-          <Input label="Address / Location" placeholder="Where they live" value={form.address} onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))} />
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-navy font-body">Notes</label>
-            <textarea
-              rows={3}
-              placeholder="Any additional context…"
-              className="rounded-md border border-cream-dark bg-white px-3 py-2 text-sm font-body text-navy-dark focus:outline-none focus:ring-2 focus:ring-navy resize-none"
-              value={form.notes}
-              onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
-            />
+      {/* Summary strip */}
+      {!loading && (
+        <div className="grid grid-cols-3 gap-4">
+          <div className="rounded-2xl bg-navy px-5 py-4 text-center">
+            <p className="font-heading text-3xl font-bold text-gold">
+              {referredUsers.length + registeredConverts.filter((c) => c.status === "verified").length}
+            </p>
+            <p className="text-cream/50 text-xs font-body mt-1">Total Souls Won</p>
           </div>
-          <Button type="submit" loading={submitting} disabled={!form.name.trim()}>
-            Register Convert 🌱
-          </Button>
-        </form>
-      </div>
-
-      {/* My converts */}
-      <h2 className="font-heading text-xl text-navy font-semibold mb-4">My Registered Converts</h2>
-      {loading ? (
-        <p className="text-navy/50 font-body">Loading…</p>
-      ) : converts.length === 0 ? (
-        <p className="text-navy/40 font-body text-sm">You haven&apos;t registered any converts yet.</p>
-      ) : (
-        <div className="space-y-3">
-          {converts.map((c) => (
-            <div key={c.id} className="bg-white border border-cream-dark rounded-xl p-4 flex items-center justify-between">
-              <div>
-                <p className="font-body font-medium text-navy">{c.name}</p>
-                {c.phone && <p className="text-xs text-navy/50 font-body">{c.phone}</p>}
-              </div>
-              <Badge variant={statusColors[c.status] ?? "gray"}>
-                {c.status.charAt(0).toUpperCase() + c.status.slice(1)}
-              </Badge>
-            </div>
-          ))}
+          <div className="rounded-2xl bg-forest/10 border border-forest/20 px-5 py-4 text-center">
+            <p className="font-heading text-3xl font-bold text-forest">{activePlatformMembers}</p>
+            <p className="text-navy/50 text-xs font-body mt-1">Active on Platform</p>
+          </div>
+          <div className="rounded-2xl bg-gold/10 border border-gold/20 px-5 py-4 text-center">
+            <p className="font-heading text-3xl font-bold text-gold-dark">{totalVerified}</p>
+            <p className="text-navy/50 text-xs font-body mt-1">Verified Converts</p>
+          </div>
         </div>
+      )}
+
+      {loading ? (
+        <p className="text-center py-16 text-navy/40 font-body">Loading your evangelism data…</p>
+      ) : (
+        <>
+          {/* Platform members referred */}
+          <section>
+            <h2 className="font-heading text-xl text-navy font-semibold mb-1">
+              Referred Platform Members
+            </h2>
+            <p className="text-navy/50 font-body text-sm mb-4">
+              Members who selected you as their referrer during registration.
+            </p>
+
+            {referredUsers.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-cream-dark p-8 text-center">
+                <p className="text-navy/40 font-body text-sm">
+                  No platform members have listed you as their referrer yet.
+                </p>
+                <p className="text-navy/30 font-body text-xs mt-1">
+                  When someone registers and selects your name, they&apos;ll appear here.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {referredUsers.map((u) => (
+                  <div
+                    key={u.id}
+                    className="bg-white border border-cream-dark rounded-xl p-4 hover:border-navy/20 transition-colors"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        {/* Avatar initial */}
+                        <div className="w-10 h-10 rounded-full bg-navy/8 flex items-center justify-center flex-shrink-0">
+                          <span className="font-heading text-sm font-bold text-navy">
+                            {u.name.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-body font-semibold text-navy text-sm truncate">{u.name}</p>
+                          <p className="text-xs text-navy/40 font-body capitalize">
+                            {u.membershipType} · Joined {format(new Date(u.joinedAt), "MMM yyyy")}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3 flex-shrink-0">
+                        <div className="text-right hidden sm:block">
+                          <p className="font-heading text-sm font-bold text-gold">{u.totalPoints.toLocaleString()} pts</p>
+                          <p className="text-[10px] text-navy/30 font-body">{u.activityCount} actions</p>
+                        </div>
+                        <div className={`w-2 h-2 rounded-full flex-shrink-0 ${u.recentlyActive ? "bg-forest" : "bg-navy/20"}`} title={u.recentlyActive ? "Active in last 30 days" : "Inactive"} />
+                      </div>
+                    </div>
+
+                    {u.lastLoginAt && (
+                      <p className="text-[10px] text-navy/30 font-body mt-2 pl-13">
+                        Last seen {formatDistanceToNow(new Date(u.lastLoginAt), { addSuffix: true })}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* Manually registered converts */}
+          <section>
+            <h2 className="font-heading text-xl text-navy font-semibold mb-1">
+              Registered Converts
+            </h2>
+            <p className="text-navy/50 font-body text-sm mb-4">
+              Converts you registered directly — awaiting or verified by admin.
+            </p>
+
+            {registeredConverts.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-cream-dark p-8 text-center">
+                <p className="text-navy/40 font-body text-sm">No converts registered yet.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {registeredConverts.map((c) => (
+                  <div
+                    key={c.id}
+                    className="bg-white border border-cream-dark rounded-xl p-4 flex items-center justify-between gap-3"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-10 h-10 rounded-full bg-gold/10 flex items-center justify-center flex-shrink-0">
+                        <span className="font-heading text-sm font-bold text-gold-dark">
+                          {c.name.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-body font-semibold text-navy text-sm truncate">{c.name}</p>
+                        <p className="text-xs text-navy/40 font-body">
+                          {c.phone ?? "No phone"} · {format(new Date(c.createdAt), "MMM d, yyyy")}
+                        </p>
+                      </div>
+                    </div>
+                    <Badge variant={convertStatusColor[c.status] ?? "gray"}>
+                      {c.status.charAt(0).toUpperCase() + c.status.slice(1)}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        </>
       )}
     </div>
   );

@@ -4,6 +4,7 @@ import { z } from "zod";
 import connectDB from "@/lib/db";
 import Sermon from "@/models/Sermon";
 import { broadcastToAllMembers, SMS_TEMPLATES } from "@/lib/sms";
+import { logActivity } from "@/lib/logActivity";
 
 const CreateSermonSchema = z.object({
   title: z.string().min(1).max(200),
@@ -73,6 +74,16 @@ export async function POST(req: NextRequest) {
     ...data,
     authorId: userId,
     publishedAt: data.status === "published" ? new Date() : undefined,
+  });
+
+  const actorName = headersList.get("x-user-name") ?? "Admin";
+  logActivity({
+    actorId: userId,
+    actorName,
+    action: data.status === "published" ? `Published sermon: ${sermon.title}` : `Created sermon draft: ${sermon.title}`,
+    targetType: "sermon",
+    targetId: sermon._id.toString(),
+    targetLabel: sermon.title,
   });
 
   if (data.status === "published") {

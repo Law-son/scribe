@@ -16,6 +16,7 @@ import {
   Sprout,
   BarChart3,
   Settings,
+  Activity,
   LogOut,
   Menu,
   X,
@@ -51,7 +52,10 @@ const sections = [
   },
   {
     label: "System",
-    links: [{ href: "/admin/settings", label: "Settings", icon: Settings }],
+    links: [
+      { href: "/admin/settings", label: "Settings", icon: Settings },
+      { href: "/admin/activities", label: "Activities", icon: Activity },
+    ],
   },
 ];
 

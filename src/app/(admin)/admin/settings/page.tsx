@@ -41,10 +41,7 @@ export default function AdminSettingsPage() {
   const [monthlyThemes, setMonthlyThemes] = useState<{ month: number; year: number; theme: string }[]>(
     MONTHS.map((_, i) => ({ month: i + 1, year: currentYear, theme: "" }))
   );
-  const [semesterThemes, setSemesterThemes] = useState<{ semester: number; year: number; theme: string }[]>([
-    { semester: 1, year: currentYear, theme: "" },
-    { semester: 2, year: currentYear, theme: "" },
-  ]);
+  const [semesterTheme, setSemesterTheme] = useState({ theme: "", year: currentYear });
   const [themeHistory, setThemeHistory] = useState<ThemeHistoryEntry[]>([]);
 
   useEffect(() => {
@@ -62,7 +59,7 @@ export default function AdminSettingsPage() {
             })
           );
         }
-        if (data.semesterThemes?.length) setSemesterThemes(data.semesterThemes);
+        if (data.semesterTheme?.theme) setSemesterTheme({ theme: data.semesterTheme.theme ?? "", year: data.semesterTheme.year ?? currentYear });
         if (data.themeHistory) setThemeHistory(data.themeHistory);
       })
       .catch(() => {})
@@ -76,7 +73,7 @@ export default function AdminSettingsPage() {
       const res = await fetch("/api/admin/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ socialLinks, customSocialLinks, annualTheme, monthlyThemes, semesterThemes }),
+        body: JSON.stringify({ socialLinks, customSocialLinks, annualTheme, monthlyThemes, semesterTheme }),
       });
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
@@ -228,40 +225,29 @@ export default function AdminSettingsPage() {
           </div>
         </section>
 
-        {/* Semester Themes */}
+        {/* Semester Theme */}
         <section className="bg-white border border-cream-dark rounded-xl p-6">
-          <h2 className="font-heading text-lg text-navy font-bold mb-4">Semester Themes</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {semesterThemes.map((s, i) => (
-              <div key={s.semester} className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-body font-semibold text-navy min-w-[90px]">Semester {s.semester}</span>
-                  <Input
-                    label=""
-                    type="number"
-                    min="2000"
-                    max="2100"
-                    value={s.year}
-                    onChange={(e) => {
-                      const updated = [...semesterThemes];
-                      updated[i] = { ...s, year: parseInt(e.target.value) || currentYear };
-                      setSemesterThemes(updated);
-                    }}
-                    className="w-24"
-                  />
-                </div>
-                <Input
-                  label={`Semester ${s.semester} Theme`}
-                  placeholder="Theme for this semester"
-                  value={s.theme}
-                  onChange={(e) => {
-                    const updated = [...semesterThemes];
-                    updated[i] = { ...s, theme: e.target.value };
-                    setSemesterThemes(updated);
-                  }}
-                />
-              </div>
-            ))}
+          <h2 className="font-heading text-lg text-navy font-bold mb-1">Semester Theme</h2>
+          <p className="text-xs text-navy/50 font-body mb-4">
+            Set the current semester theme. Changing it will automatically archive the previous one with the date.
+          </p>
+          <div className="grid grid-cols-3 gap-4">
+            <Input
+              label="Year"
+              type="number"
+              min="2000"
+              max="2100"
+              value={semesterTheme.year}
+              onChange={(e) => setSemesterTheme((t) => ({ ...t, year: parseInt(e.target.value) || currentYear }))}
+            />
+            <div className="col-span-2">
+              <Input
+                label="Theme"
+                placeholder="e.g. Season of New Beginnings"
+                value={semesterTheme.theme}
+                onChange={(e) => setSemesterTheme((t) => ({ ...t, theme: e.target.value }))}
+              />
+            </div>
           </div>
         </section>
 

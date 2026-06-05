@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/db";
 import SiteSettings from "@/models/SiteSettings";
 import { getCurrentUser } from "@/lib/auth";
+import { logActivity } from "@/lib/logActivity";
 
 async function requireAdmin() {
   const user = await getCurrentUser();
@@ -23,7 +24,8 @@ export async function GET() {
 }
 
 export async function PUT(req: NextRequest) {
-  if (!(await requireAdmin())) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const actor = await requireAdmin();
+  if (!actor) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   try {
     const body = await req.json();
@@ -58,14 +60,11 @@ export async function PUT(req: NextRequest) {
         }
       }
 
-      const newSemesters: { semester: number; year: number; theme: string }[] = body.semesterThemes ?? [];
-      const oldSemesters: { semester: number; year: number; theme: string }[] = current.semesterThemes ?? [];
-      for (const oldS of oldSemesters) {
-        if (!oldS.theme) continue;
-        const newS = newSemesters.find((s) => s.semester === oldS.semester && s.year === oldS.year);
-        if (newS && newS.theme !== oldS.theme) {
-          historyEntries.push({ type: "semester", label: `Semester ${oldS.semester} — ${oldS.year}`, theme: oldS.theme, archivedAt: now });
-        }
+      const oldSem = current.semesterTheme;
+      const newSem = body.semesterTheme;
+      if (oldSem?.theme && newSem && newSem.theme !== oldSem.theme) {
+        const label = oldSem.year ? `Semester Theme ${oldSem.year}` : "Semester Theme";
+        historyEntries.push({ type: "semester", label, theme: oldSem.theme, archivedAt: now });
       }
     }
 
@@ -76,7 +75,7 @@ export async function PUT(req: NextRequest) {
       ),
       annualTheme: body.annualTheme ?? {},
       monthlyThemes: body.monthlyThemes ?? [],
-      semesterThemes: body.semesterThemes ?? [],
+      semesterTheme: body.semesterTheme ?? {},
     };
 
     const mongoUpdate = historyEntries.length > 0
@@ -89,6 +88,7 @@ export async function PUT(req: NextRequest) {
       { upsert: true, new: true, runValidators: false, strict: false }
     );
 
+    logActivity({ actorId: actor.sub, actorName: actor.name, action: "Updated site settings" });
     return NextResponse.json({ ok: true, id: doc?._id?.toString() ?? "ok" });
   } catch (err) {
     console.error("[Settings PUT]", err);

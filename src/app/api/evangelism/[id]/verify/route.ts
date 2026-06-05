@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import connectDB from "@/lib/db";
 import Convert from "@/models/Convert";
+import User from "@/models/User";
 import { awardPoints } from "@/lib/points";
+import { logActivity } from "@/lib/logActivity";
 
 export async function POST(
   _req: NextRequest,
@@ -33,6 +35,16 @@ export async function POST(
     contentId: id,
   });
 
+  const admin = await User.findById(adminId).select("name").lean();
+  logActivity({
+    actorId: adminId,
+    actorName: admin?.name ?? "Admin",
+    action: `Verified convert: ${convert.name}`,
+    targetType: "convert",
+    targetId: id,
+    targetLabel: convert.name,
+  });
+
   return NextResponse.json({ ok: true, awarded });
 }
 
@@ -47,6 +59,15 @@ export async function DELETE(
   if (role !== "admin" || !adminId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   await connectDB();
-  await Convert.findByIdAndUpdate(id, { status: "rejected", verifiedBy: adminId, verifiedAt: new Date() });
+  const convert = await Convert.findByIdAndUpdate(id, { status: "rejected", verifiedBy: adminId, verifiedAt: new Date() }, { new: false });
+  const admin = await User.findById(adminId).select("name").lean();
+  logActivity({
+    actorId: adminId,
+    actorName: admin?.name ?? "Admin",
+    action: `Rejected convert: ${convert?.name ?? id}`,
+    targetType: "convert",
+    targetId: id,
+    targetLabel: convert?.name,
+  });
   return NextResponse.json({ ok: true });
 }

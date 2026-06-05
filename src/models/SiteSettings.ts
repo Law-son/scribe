@@ -29,7 +29,7 @@ export interface ISiteSettings extends Document {
     scripture?: string;
   };
   monthlyThemes: { month: number; year: number; theme: string }[];
-  semesterThemes: { semester: number; year: number; theme: string }[];
+  semesterTheme?: { theme: string; year: number };
   themeHistory: IThemeHistoryEntry[];
   updatedAt: Date;
 }
@@ -75,14 +75,10 @@ const SiteSettingsSchema = new Schema<ISiteSettings>(
         _id: false,
       },
     ],
-    semesterThemes: [
-      {
-        semester: { type: Number, min: 1, max: 2 },
-        year: Number,
-        theme: String,
-        _id: false,
-      },
-    ],
+    semesterTheme: {
+      theme: String,
+      year: Number,
+    },
     themeHistory: [ThemeHistorySchema],
   },
   { timestamps: true }

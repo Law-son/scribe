@@ -7,6 +7,7 @@ import Devotional from "@/models/Devotional";
 import BibleStudy from "@/models/BibleStudy";
 import Quote from "@/models/Quote";
 import { format } from "date-fns";
+import { QuoteCarousel } from "@/components/content/QuoteCarousel";
 
 function getGreeting() {
   const h = new Date().getUTCHours();
@@ -24,12 +25,12 @@ export default async function DashboardPage() {
   await connectDB();
   const now = new Date();
 
-  const [user, latestSermon, latestDevotional, latestBibleStudy, latestQuote] = await Promise.all([
+  const [user, latestSermon, latestDevotional, latestBibleStudy, latestQuotes] = await Promise.all([
     User.findById(userId).select("totalPoints name createdAt").lean(),
     Sermon.findOne({ status: "published" }).sort({ publishedAt: -1 }).select("title preacher publishedAt").lean(),
     Devotional.findOne({ status: "approved", scheduledAt: { $lte: now } }).sort({ scheduledAt: -1 }).select("title verse scheduledAt").lean(),
     BibleStudy.findOne({ status: "published" }).sort({ publishedAt: -1 }).select("title topic publishedAt").lean(),
-    Quote.findOne({ status: "published" }).sort({ createdAt: -1 }).select("text author").lean(),
+    Quote.find({ status: "published" }).sort({ createdAt: -1 }).limit(5).select("text author").lean(),
   ]);
 
   const firstName = userName.split(" ")[0];
@@ -172,21 +173,9 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* ── Quote of the day ─────────────────────────────────── */}
-      {latestQuote && (
-        <div className="relative rounded-2xl bg-gradient-to-br from-ivory to-cream border border-gold/20 px-8 py-7">
-          {/* giant quotation mark */}
-          <svg className="absolute top-4 left-5 w-10 h-10 text-gold/20" viewBox="0 0 40 40" fill="currentColor">
-            <path d="M0 28 C0 18 6 10 18 6 L20 10 C14 13 11 17 11 22 C11 22 13 22 14 22 C17 22 20 25 20 29 C20 33 17 36 13 36 C6 36 0 33 0 28 Z M20 28 C20 18 26 10 38 6 L40 10 C34 13 31 17 31 22 C31 22 33 22 34 22 C37 22 40 25 40 29 C40 33 37 36 33 36 C26 36 20 33 20 28 Z"/>
-          </svg>
-          <p className="font-heading text-navy-dark text-lg italic leading-relaxed pl-6 relative z-10">
-            {latestQuote.text}
-          </p>
-          <div className="flex items-center gap-2 mt-4 pl-6">
-            <div className="h-px w-8 bg-gold/40" />
-            <p className="text-gold-dark text-sm font-body font-medium">{latestQuote.author}</p>
-          </div>
-        </div>
+      {/* ── Quotes carousel ──────────────────────────────────── */}
+      {latestQuotes.length > 0 && (
+        <QuoteCarousel quotes={latestQuotes.map((q) => ({ text: q.text, author: q.author }))} />
       )}
 
       {/* ── Quick Access ─────────────────────────────────────── */}

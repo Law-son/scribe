@@ -5,6 +5,7 @@ import connectDB from "@/lib/db";
 import User from "@/models/User";
 import { signToken, setAuthCookie } from "@/lib/auth";
 import { sendSMS } from "@/lib/sms";
+import { awardPoints } from "@/lib/points";
 
 const RegisterSchema = z.object({
   name: z.string().min(2).max(100),
@@ -69,6 +70,15 @@ export async function POST(req: NextRequest) {
       [normalizedPhone],
       `Welcome to UCM Scribe, ${name}! Your account has been created. Explore sermons, Bible study notes, devotionals, and more. God bless you!`
     ).catch((err) => console.error("[Auth/Register] Welcome SMS failed:", err));
+
+    // Auto-award referrer points when a convert registers and selects a referrer
+    if (referredBy) {
+      awardPoints({
+        userId: referredBy,
+        action: "register_convert",
+        contentId: user._id.toString(),
+      }).catch((err) => console.error("[Auth/Register] Referrer points failed:", err));
+    }
 
     const token = await signToken({
       sub: user._id.toString(),
