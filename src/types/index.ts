@@ -1,7 +1,6 @@
 export type UserRole = "member" | "admin";
 export type ContentStatus = "draft" | "published";
 export type DevotionalStatus = "pending" | "approved" | "rejected";
-export type ConvertStatus = "pending" | "verified" | "rejected";
 
 export type PointAction =
   | "daily_login"

@@ -4,6 +4,7 @@ import connectDB from "@/lib/db";
 import BibleStudy from "@/models/BibleStudy";
 import { Badge } from "@/components/ui/Badge";
 import { TablePagination } from "@/components/ui/TablePagination";
+import { ContentActions } from "@/components/admin/ContentActions";
 import { format } from "date-fns";
 
 export const metadata = { title: "Manage Bible Study" };
@@ -61,8 +62,16 @@ export default async function AdminBibleStudyPage({
                       {n.date ? format(new Date(n.date), "MMM d, yyyy") : "—"}
                     </td>
                     <td className="px-5 py-4"><Badge variant={n.status === "published" ? "green" : "gray"}>{n.status}</Badge></td>
-                    <td className="px-5 py-4 text-right">
-                      <Link href={`/admin/bible-study/${n._id}/edit`} className="text-sm text-gold-dark hover:underline font-body">Edit</Link>
+                    <td className="px-5 py-4">
+                      <div className="flex items-center justify-end gap-4">
+                        <Link href={`/admin/bible-study/${n._id}/edit`} className="text-sm text-gold-dark hover:underline font-body">Edit</Link>
+                        <ContentActions
+                          id={n._id.toString()}
+                          apiBase="/api/bible-study"
+                          status={n.status}
+                          label={n.topic ?? n.title ?? "this note"}
+                        />
+                      </div>
                     </td>
                   </tr>
                 ))}

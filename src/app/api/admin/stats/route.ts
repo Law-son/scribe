@@ -3,11 +3,11 @@ import { startOfMonth, startOfYear, subDays } from "date-fns";
 import { getCurrentUser } from "@/lib/auth";
 import connectDB from "@/lib/db";
 import User from "@/models/User";
+import Convert from "@/models/Convert";
 import Sermon from "@/models/Sermon";
 import BibleStudy from "@/models/BibleStudy";
 import Devotional from "@/models/Devotional";
 import Announcement from "@/models/Announcement";
-import Convert from "@/models/Convert";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -46,8 +46,8 @@ export async function GET() {
     Devotional.countDocuments({ status: "approved", approvedAt: { $gte: yearStart } }),
     Announcement.countDocuments({ createdAt: { $gte: monthStart } }),
     Announcement.countDocuments({ createdAt: { $gte: yearStart } }),
-    Convert.countDocuments({ status: "verified", verifiedAt: { $gte: monthStart } }),
-    Convert.countDocuments({ status: "verified", verifiedAt: { $gte: yearStart } }),
+    Convert.countDocuments({ createdAt: { $gte: monthStart } }),
+    Convert.countDocuments({ createdAt: { $gte: yearStart } }),
   ]);
 
   return NextResponse.json({

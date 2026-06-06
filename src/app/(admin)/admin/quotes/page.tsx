@@ -4,6 +4,7 @@ import connectDB from "@/lib/db";
 import Quote from "@/models/Quote";
 import { Badge } from "@/components/ui/Badge";
 import { TablePagination } from "@/components/ui/TablePagination";
+import { ContentActions } from "@/components/admin/ContentActions";
 
 export const metadata = { title: "Manage Quotes" };
 
@@ -48,6 +49,7 @@ export default async function AdminQuotesPage({
                   <th className="text-left px-5 py-3 text-xs font-body font-semibold text-navy/50 uppercase">Quote</th>
                   <th className="text-left px-5 py-3 text-xs font-body font-semibold text-navy/50 uppercase hidden sm:table-cell">Author</th>
                   <th className="text-left px-5 py-3 text-xs font-body font-semibold text-navy/50 uppercase">Status</th>
+                  <th className="px-5 py-3" />
                 </tr>
               </thead>
               <tbody className="divide-y divide-cream-dark">
@@ -57,6 +59,14 @@ export default async function AdminQuotesPage({
                     <td className="px-5 py-4 text-sm text-navy font-body italic max-w-xs truncate">&ldquo;{q.text}&rdquo;</td>
                     <td className="px-5 py-4 text-sm text-navy/60 font-body hidden sm:table-cell">{q.author}</td>
                     <td className="px-5 py-4"><Badge variant={q.status === "published" ? "green" : "gray"}>{q.status}</Badge></td>
+                    <td className="px-5 py-4">
+                      <ContentActions
+                        id={q._id.toString()}
+                        apiBase="/api/quotes"
+                        status={q.status}
+                        label={`quote by ${q.author}`}
+                      />
+                    </td>
                   </tr>
                 ))}
               </tbody>

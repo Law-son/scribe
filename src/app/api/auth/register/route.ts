@@ -71,13 +71,10 @@ export async function POST(req: NextRequest) {
       `Welcome to UCM Scribe, ${name}! Your account has been created. Explore sermons, Bible study notes, devotionals, and more. God bless you!`
     ).catch((err) => console.error("[Auth/Register] Welcome SMS failed:", err));
 
-    // Auto-award referrer points when a convert registers and selects a referrer
-    if (referredBy) {
-      awardPoints({
-        userId: referredBy,
-        action: "register_convert",
-        contentId: user._id.toString(),
-      }).catch((err) => console.error("[Auth/Register] Referrer points failed:", err));
+    // Award referrer +15 points when a convert registers and selects them
+    if (membershipType === "convert" && referredBy) {
+      awardPoints({ userId: referredBy, action: "register_convert", contentId: user._id.toString() })
+        .catch((err) => console.error("[Auth/Register] Referrer points failed:", err));
     }
 
     const token = await signToken({

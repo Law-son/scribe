@@ -19,7 +19,6 @@ import {
   Sprout,
   Star,
   TrendingUp,
-  AlertCircle,
   Trophy,
 } from "lucide-react";
 
@@ -79,7 +78,6 @@ export default async function AdminDashboard() {
     devotionalsMonth, devotionalsYear,
     announcementsMonth,
     soulsMonth, soulsYear,
-    pendingConverts,
     weeklyTop5,
   ] = await Promise.all([
     User.countDocuments({}),
@@ -92,9 +90,8 @@ export default async function AdminDashboard() {
     Devotional.countDocuments({ status: "approved", approvedAt: { $gte: monthStart } }),
     Devotional.countDocuments({ status: "approved", approvedAt: { $gte: yearStart } }),
     Announcement.countDocuments({ createdAt: { $gte: monthStart } }),
-    Convert.countDocuments({ status: "verified", verifiedAt: { $gte: monthStart } }),
-    Convert.countDocuments({ status: "verified", verifiedAt: { $gte: yearStart } }),
-    Convert.countDocuments({ status: "pending" }),
+    Convert.countDocuments({ createdAt: { $gte: monthStart } }),
+    Convert.countDocuments({ createdAt: { $gte: yearStart } }),
     PointTransaction.aggregate([
       { $match: { createdAt: { $gte: weekStart } } },
       { $group: { _id: "$userId", points: { $sum: "$points" } } },
@@ -125,23 +122,6 @@ export default async function AdminDashboard() {
           </p>
         </div>
       </div>
-
-      {/* Pending converts alert */}
-      {pendingConverts > 0 && (
-        <Link href="/admin/evangelism">
-          <div className="flex items-center gap-4 bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4 hover:bg-amber-100 transition-colors">
-            <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center flex-shrink-0">
-              <AlertCircle size={18} className="text-amber-600" strokeWidth={2} />
-            </div>
-            <div className="flex-1">
-              <p className="font-body font-semibold text-amber-800 text-sm">
-                {pendingConverts} convert{pendingConverts !== 1 ? "s" : ""} awaiting verification
-              </p>
-              <p className="text-xs text-amber-600 font-body mt-0.5">Review and verify new souls won →</p>
-            </div>
-          </div>
-        </Link>
-      )}
 
       {/* Members */}
       <div>

@@ -4,6 +4,7 @@ import connectDB from "@/lib/db";
 import Sermon from "@/models/Sermon";
 import { Badge } from "@/components/ui/Badge";
 import { TablePagination } from "@/components/ui/TablePagination";
+import { ContentActions } from "@/components/admin/ContentActions";
 import { format } from "date-fns";
 
 export const metadata = { title: "Manage Sermons" };
@@ -69,10 +70,18 @@ export default async function AdminSermonsPage({
                     <td className="px-5 py-4 text-sm text-navy/50 font-body hidden md:table-cell">
                       {format(new Date(s.date ?? s.createdAt), "MMM d, yyyy")}
                     </td>
-                    <td className="px-5 py-4 text-right">
-                      <Link href={`/admin/sermons/${s._id}/edit`} className="text-sm text-gold-dark hover:underline font-body">
-                        Edit
-                      </Link>
+                    <td className="px-5 py-4">
+                      <div className="flex items-center justify-end gap-4">
+                        <Link href={`/admin/sermons/${s._id}/edit`} className="text-sm text-gold-dark hover:underline font-body">
+                          Edit
+                        </Link>
+                        <ContentActions
+                          id={s._id.toString()}
+                          apiBase="/api/sermons"
+                          status={s.status}
+                          label={s.title}
+                        />
+                      </div>
                     </td>
                   </tr>
                 ))}
