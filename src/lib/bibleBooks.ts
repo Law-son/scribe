@@ -92,3 +92,119 @@ export function parseReference(ref: string): { book: BibleBook; chapter: number;
   if (!book) return null;
   return { book, chapter: parseInt(match[2]), verse: parseInt(match[3]) };
 }
+
+// ── Spoken reference parsing ──────────────────────────────────────────────────
+// Turns transcribed speech like "john chapter three verse sixteen" or
+// "first corinthians thirteen four" into { book, chapter, verse }.
+
+const ONES: Record<string, number> = {
+  zero: 0, oh: 0, one: 1, two: 2, to: 2, too: 2, three: 3, four: 4, for: 4,
+  five: 5, six: 6, seven: 7, eight: 8, ate: 8, nine: 9,
+};
+const TEENS: Record<string, number> = {
+  ten: 10, eleven: 11, twelve: 12, thirteen: 13, fourteen: 14,
+  fifteen: 15, sixteen: 16, seventeen: 17, eighteen: 18, nineteen: 19,
+};
+const TENS: Record<string, number> = {
+  twenty: 20, thirty: 30, forty: 40, fifty: 50,
+  sixty: 60, seventy: 70, eighty: 80, ninety: 90,
+};
+
+const NUMBER_WORDS = new Set([
+  ...Object.keys(ONES), ...Object.keys(TEENS), ...Object.keys(TENS), "hundred", "and",
+]);
+
+const ORDINAL_TO_DIGIT: Record<string, string> = {
+  first: "1", "1st": "1",
+  second: "2", "2nd": "2",
+  third: "3", "3rd": "3",
+};
+
+const FILLER_WORDS = new Set(["chapter", "verse", "verses", "in", "the", "book", "of", "colon", "number", "no"]);
+
+/** Consumes a run of number-words (or digits) starting at index i, returns the parsed value and tokens consumed. */
+function consumeNumber(tokens: string[], i: number): { value: number; length: number } | null {
+  const tok = tokens[i];
+  if (tok === undefined) return null;
+
+  if (/^\d+$/.test(tok)) return { value: parseInt(tok, 10), length: 1 };
+  if (!NUMBER_WORDS.has(tok)) return null;
+
+  let total = 0;
+  let current = 0;
+  let length = 0;
+  let j = i;
+
+  while (j < tokens.length && NUMBER_WORDS.has(tokens[j])) {
+    const word = tokens[j];
+    if (word === "and") { j++; length++; continue; }
+    if (word === "hundred") {
+      current = (current || 1) * 100;
+      total += current;
+      current = 0;
+    } else if (word in TENS) {
+      current += TENS[word];
+    } else if (word in TEENS) {
+      current += TEENS[word];
+    } else if (word in ONES) {
+      current += ONES[word];
+    }
+    j++;
+    length++;
+  }
+
+  total += current;
+  if (length === 0) return null;
+  return { value: total, length };
+}
+
+export function parseSpokenReference(raw: string): { book: BibleBook; chapter: number; verse: number } | null {
+  const cleaned = raw
+    .toLowerCase()
+    .replace(/[.,!?;:]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!cleaned) return null;
+
+  let tokens = cleaned.split(" ");
+
+  // Normalize a leading ordinal ("first corinthians" → "1 corinthians")
+  if (tokens[0] in ORDINAL_TO_DIGIT) {
+    tokens = [ORDINAL_TO_DIGIT[tokens[0]], ...tokens.slice(1)];
+  }
+
+  // Match the longest possible book name at the start of the transcript
+  let book: BibleBook | null = null;
+  let consumedForBook = 0;
+  for (const candidate of BIBLE_BOOKS) {
+    const nameTokens = candidate.name.toLowerCase().split(" ");
+    if (nameTokens.length > tokens.length) continue;
+    const matches = nameTokens.every((t, idx) => tokens[idx] === t);
+    if (matches && nameTokens.length > consumedForBook) {
+      book = candidate;
+      consumedForBook = nameTokens.length;
+    }
+  }
+  if (!book) return null;
+
+  // Walk the remaining tokens, skipping fillers, collecting up to two numbers
+  const numbers: number[] = [];
+  let i = consumedForBook;
+  while (i < tokens.length && numbers.length < 2) {
+    const tok = tokens[i];
+    if (FILLER_WORDS.has(tok)) { i++; continue; }
+    const parsed = consumeNumber(tokens, i);
+    if (parsed) {
+      numbers.push(parsed.value);
+      i += parsed.length;
+    } else {
+      i++;
+    }
+  }
+
+  if (numbers.length < 2) return null;
+  const [chapter, verse] = numbers;
+  if (chapter < 1 || chapter > book.chapters || verse < 1) return null;
+
+  return { book, chapter, verse };
+}

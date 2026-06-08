@@ -17,6 +17,7 @@ import {
   BarChart3,
   Settings,
   Activity,
+  Mic,
   LogOut,
   Menu,
   X,
@@ -37,6 +38,7 @@ const sections = [
       { href: "/admin/devotionals", label: "Devotionals", icon: Sunrise },
       { href: "/admin/quotes", label: "Quotes", icon: Quote },
       { href: "/admin/announcements", label: "Announcements", icon: Megaphone },
+      { href: "/admin/voice-bible", label: "Voice Bible Lookup", icon: Mic },
     ],
   },
   {
