@@ -122,6 +122,166 @@ const ORDINAL_TO_DIGIT: Record<string, string> = {
 
 const FILLER_WORDS = new Set(["chapter", "verse", "verses", "in", "the", "book", "of", "colon", "number", "no"]);
 
+/**
+ * Phonetic / STT misrecognition aliases → canonical lowercase book name.
+ * Longer phrases must come before shorter ones so the replacement pass hits
+ * the most-specific match first.
+ */
+const BOOK_ALIASES: Array<{ from: string; to: string }> = [
+  // ── Multi-word phrases first (specificity order) ─────────────────────────
+  // Zephaniah — STT often mishears this as conversational phrases
+  { from: "is there funnier", to: "zephaniah" },
+  { from: "anything funnier", to: "zephaniah" },
+  { from: "his funnier", to: "zephaniah" },
+  { from: "it's funnier", to: "zephaniah" },
+  { from: "there's funnier", to: "zephaniah" },
+  // Song of Solomon
+  { from: "song of songs", to: "song of solomon" },
+  { from: "songs of solomon", to: "song of solomon" },
+  { from: "song of song", to: "song of solomon" },
+
+  // ── Single-word aliases ──────────────────────────────────────────────────
+  // Genesis
+  { from: "jenesis", to: "genesis" },
+  { from: "genis", to: "genesis" },
+  // Exodus
+  { from: "exidus", to: "exodus" },
+  { from: "exidous", to: "exodus" },
+  { from: "exadus", to: "exodus" },
+  // Leviticus
+  { from: "levitacus", to: "leviticus" },
+  { from: "leviticus", to: "leviticus" },
+  { from: "levitacous", to: "leviticus" },
+  // Deuteronomy
+  { from: "deutronomy", to: "deuteronomy" },
+  { from: "dueteronomy", to: "deuteronomy" },
+  { from: "duteronomy", to: "deuteronomy" },
+  { from: "deuteronomy", to: "deuteronomy" },
+  // Ruth
+  { from: "route", to: "ruth" },
+  { from: "root", to: "ruth" },
+  { from: "rooth", to: "ruth" },
+  { from: "rute", to: "ruth" },
+  // Nehemiah
+  { from: "nehimiah", to: "nehemiah" },
+  { from: "nehemia", to: "nehemiah" },
+  { from: "nehimia", to: "nehemiah" },
+  { from: "nehamia", to: "nehemiah" },
+  { from: "nahemia", to: "nehemiah" },
+  // Psalms
+  { from: "psalm", to: "psalms" },
+  { from: "some", to: "psalms" },
+  { from: "sam", to: "psalms" },
+  { from: "sams", to: "psalms" },
+  { from: "salms", to: "psalms" },
+  { from: "palms", to: "psalms" },
+  // Ecclesiastes
+  { from: "ecclesiastics", to: "ecclesiastes" },
+  { from: "ecclesiasies", to: "ecclesiastes" },
+  { from: "ecclesiastis", to: "ecclesiastes" },
+  // Isaiah
+  { from: "isaia", to: "isaiah" },
+  // Jeremiah
+  { from: "jerimiah", to: "jeremiah" },
+  { from: "jerimia", to: "jeremiah" },
+  { from: "jeramiah", to: "jeremiah" },
+  // Ezekiel
+  { from: "ezekeal", to: "ezekiel" },
+  { from: "ezekeil", to: "ezekiel" },
+  // Hosea
+  { from: "hoshea", to: "hosea" },
+  // Joel
+  { from: "jewel", to: "joel" },
+  { from: "joule", to: "joel" },
+  { from: "jowl", to: "joel" },
+  // Obadiah
+  { from: "obadia", to: "obadiah" },
+  { from: "obadaya", to: "obadiah" },
+  { from: "obadiyah", to: "obadiah" },
+  { from: "obadiya", to: "obadiah" },
+  // Micah
+  { from: "mycar", to: "micah" },
+  { from: "mica", to: "micah" },
+  { from: "micka", to: "micah" },
+  { from: "mika", to: "micah" },
+  // Nahum
+  { from: "nahem", to: "nahum" },
+  { from: "nahim", to: "nahum" },
+  { from: "nayum", to: "nahum" },
+  { from: "naum", to: "nahum" },
+  // Habakkuk
+  { from: "habacuc", to: "habakkuk" },
+  { from: "habakuk", to: "habakkuk" },
+  { from: "habakook", to: "habakkuk" },
+  { from: "habakkook", to: "habakkuk" },
+  // Zephaniah
+  { from: "zefanya", to: "zephaniah" },
+  { from: "zefaniah", to: "zephaniah" },
+  { from: "zephania", to: "zephaniah" },
+  { from: "zefanyah", to: "zephaniah" },
+  // Haggai
+  { from: "hey guy", to: "haggai" },
+  { from: "haggy", to: "haggai" },
+  { from: "haggie", to: "haggai" },
+  { from: "haggay", to: "haggai" },
+  { from: "haggy", to: "haggai" },
+  // Zechariah
+  { from: "zakaria", to: "zechariah" },
+  { from: "zacaria", to: "zechariah" },
+  { from: "zacharia", to: "zechariah" },
+  { from: "zecharia", to: "zechariah" },
+  { from: "zachariah", to: "zechariah" },
+  // Malachi
+  { from: "malaki", to: "malachi" },
+  { from: "malakai", to: "malachi" },
+  { from: "malaky", to: "malachi" },
+  // Matthew
+  { from: "mathew", to: "matthew" },
+  { from: "mathew", to: "matthew" },
+  // Acts
+  { from: "arts", to: "acts" },
+  { from: "ax", to: "acts" },
+  // Ephesians
+  { from: "efficience", to: "ephesians" },
+  { from: "efficians", to: "ephesians" },
+  { from: "efishans", to: "ephesians" },
+  { from: "efeshans", to: "ephesians" },
+  { from: "efesians", to: "ephesians" },
+  // Philippians
+  { from: "filipians", to: "philippians" },
+  { from: "filipeans", to: "philippians" },
+  // Colossians
+  { from: "colossions", to: "colossians" },
+  { from: "colosians", to: "colossians" },
+  // Thessalonians
+  { from: "thessalonions", to: "thessalonians" },
+  { from: "thesalonians", to: "thessalonians" },
+  // Revelation
+  { from: "revelations", to: "revelation" },
+  { from: "revelashuns", to: "revelation" },
+];
+
+/**
+ * Replace alias phrases in the cleaned transcript with canonical book names.
+ * We iterate longest-first (handled by definition order above) and replace
+ * whole-word occurrences only.
+ */
+function normalizeAliases(text: string): string {
+  let result = text;
+  for (const { from, to } of BOOK_ALIASES) {
+    // Use word-boundary-aware replacement; escape special regex chars in `from`
+    const escaped = from.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    result = result.replace(new RegExp(`(?<![a-z])${escaped}(?![a-z])`, "g"), to);
+  }
+  return result;
+}
+
+/**
+ * "my car" is two words — handle multi-word spoken aliases that arrive as
+ * separate tokens by doing the alias substitution on the whole string, not
+ * token-by-token.
+ */
+
 /** Consumes a run of number-words (or digits) starting at index i, returns the parsed value and tokens consumed. */
 function consumeNumber(tokens: string[], i: number): { value: number; length: number } | null {
   const tok = tokens[i];
@@ -159,11 +319,13 @@ function consumeNumber(tokens: string[], i: number): { value: number; length: nu
 }
 
 export function parseSpokenReference(raw: string): { book: BibleBook; chapter: number; verse: number } | null {
-  const cleaned = raw
-    .toLowerCase()
-    .replace(/[.,!?;:]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+  const cleaned = normalizeAliases(
+    raw
+      .toLowerCase()
+      .replace(/[.,!?;:]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+  );
   if (!cleaned) return null;
 
   let tokens = cleaned.split(" ");
@@ -199,6 +361,19 @@ export function parseSpokenReference(raw: string): { book: BibleBook; chapter: n
       i += parsed.length;
     } else {
       i++;
+    }
+  }
+
+  // When STT collapses two spoken single digits into one (e.g. "seven seven"
+  // → "77", "two three" → "23"), we end up with exactly one number.  If that
+  // number is a two-digit value whose tens and ones digits are both 1-9, split
+  // it into [tens, ones] so "Matthew 77" → Matthew 7:7.
+  if (numbers.length === 1) {
+    const n = numbers[0];
+    const tens = Math.floor(n / 10);
+    const ones = n % 10;
+    if (n >= 11 && n <= 99 && tens >= 1 && tens <= 9 && ones >= 1 && ones <= 9) {
+      numbers.splice(0, 1, tens, ones);
     }
   }
 
