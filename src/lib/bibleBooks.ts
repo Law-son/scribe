@@ -200,11 +200,15 @@ const BOOK_ALIASES: Array<{ from: string; to: string }> = [
   { from: "obadiyah", to: "obadiah" },
   { from: "obadiya", to: "obadiah" },
   // Micah
+  { from: "my car", to: "micah" },
   { from: "mycar", to: "micah" },
+  { from: "michael", to: "micah" },
   { from: "mica", to: "micah" },
   { from: "micka", to: "micah" },
   { from: "mika", to: "micah" },
   // Nahum
+  { from: "new home", to: "nahum" },
+  { from: "newhome", to: "nahum" },
   { from: "nahem", to: "nahum" },
   { from: "nahim", to: "nahum" },
   { from: "nayum", to: "nahum" },
@@ -368,7 +372,8 @@ export function parseSpokenReference(raw: string): { book: BibleBook; chapter: n
   // → "77", "two three" → "23"), we end up with exactly one number.  If that
   // number is a two-digit value whose tens and ones digits are both 1-9, split
   // it into [tens, ones] so "Matthew 77" → Matthew 7:7.
-  if (numbers.length === 1) {
+  // Skip for Psalms: its 150 chapters mean "23" legitimately means chapter 23.
+  if (numbers.length === 1 && book.name !== "Psalms") {
     const n = numbers[0];
     const tens = Math.floor(n / 10);
     const ones = n % 10;
@@ -377,8 +382,9 @@ export function parseSpokenReference(raw: string): { book: BibleBook; chapter: n
     }
   }
 
-  if (numbers.length < 2) return null;
-  const [chapter, verse] = numbers;
+  if (numbers.length < 1) return null;
+  const chapter = numbers[0];
+  const verse = numbers.length >= 2 ? numbers[1] : 1;
   if (chapter < 1 || chapter > book.chapters || verse < 1) return null;
 
   return { book, chapter, verse };
