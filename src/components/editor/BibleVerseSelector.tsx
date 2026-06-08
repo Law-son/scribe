@@ -103,12 +103,12 @@ export function BibleVerseSelector({ editor }: Props) {
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full mt-2 z-50 w-[340px] bg-white border border-cream-dark rounded-2xl shadow-xl overflow-hidden">
-          <div className="px-4 py-3 bg-navy border-b border-navy-light/30">
+        <div className="absolute left-0 top-full mt-2 z-50 w-[340px] max-h-[min(34rem,80vh)] bg-white border border-cream-dark rounded-2xl shadow-xl overflow-hidden flex flex-col">
+          <div className="px-4 py-3 bg-navy border-b border-navy-light/30 flex-shrink-0">
             <p className="text-xs font-body font-semibold text-gold uppercase tracking-widest">Insert Bible Verse</p>
           </div>
 
-          <div className="p-4 space-y-3">
+          <div className="p-4 space-y-3 overflow-y-auto">
             {/* Translation */}
             <div>
               <label className="block text-[11px] font-body font-semibold text-navy/50 uppercase tracking-wider mb-1">Translation</label>
@@ -178,14 +178,18 @@ export function BibleVerseSelector({ editor }: Props) {
                 <p className="text-xs text-burgundy font-body">{error}</p>
               ) : previewText ? (
                 <>
-                  <p className="text-sm font-body text-navy-dark leading-relaxed italic">&ldquo;{previewText}&rdquo;</p>
+                  <p className="text-sm font-body text-navy-dark leading-relaxed italic max-h-40 overflow-y-auto pr-1">
+                    &ldquo;{previewText}&rdquo;
+                  </p>
                   <p className="text-[11px] text-gold-dark font-body font-medium mt-2">— {reference} ({translation})</p>
                 </>
               ) : (
                 <p className="text-xs text-navy/40 font-body italic">Select a verse to preview</p>
               )}
             </div>
+          </div>
 
+          <div className="p-4 pt-3 border-t border-cream-dark flex-shrink-0">
             <button type="button" onClick={handleInsert} disabled={!canInsert}
               className="w-full bg-navy text-cream text-sm font-body font-medium py-2 rounded-xl hover:bg-navy-light transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
               Insert Verse
