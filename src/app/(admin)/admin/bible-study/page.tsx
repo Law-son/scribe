@@ -5,6 +5,7 @@ import BibleStudy from "@/models/BibleStudy";
 import { Badge } from "@/components/ui/Badge";
 import { TablePagination } from "@/components/ui/TablePagination";
 import { ContentActions } from "@/components/admin/ContentActions";
+import { EditLink } from "@/components/admin/EditLink";
 import { format } from "date-fns";
 
 export const metadata = { title: "Manage Bible Study" };
@@ -43,6 +44,7 @@ export default async function AdminBibleStudyPage({
           <p className="text-center text-navy/50 font-body py-12">No notes yet.</p>
         ) : (
           <>
+            <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-cream-light border-b border-cream-dark">
                 <tr>
@@ -64,7 +66,7 @@ export default async function AdminBibleStudyPage({
                     <td className="px-5 py-4"><Badge variant={n.status === "published" ? "green" : "gray"}>{n.status}</Badge></td>
                     <td className="px-5 py-4">
                       <div className="flex items-center justify-end gap-4">
-                        <Link href={`/admin/bible-study/${n._id}/edit`} className="text-sm text-gold-dark hover:underline font-body">Edit</Link>
+                        <EditLink href={`/admin/bible-study/${n._id}/edit`} />
                         <ContentActions
                           id={n._id.toString()}
                           apiBase="/api/bible-study"
@@ -77,6 +79,7 @@ export default async function AdminBibleStudyPage({
                 ))}
               </tbody>
             </table>
+            </div>
             <Suspense>
               <TablePagination currentPage={page} totalPages={totalPages} total={total} pageSize={PAGE_SIZE} />
             </Suspense>

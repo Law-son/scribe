@@ -71,3 +71,31 @@ export async function PATCH(
 
   return NextResponse.json({ id: user._id.toString() });
 }
+
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const actor = await guard();
+  if (!actor) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const { id } = await params;
+
+  if (id === actor.sub) {
+    return NextResponse.json({ error: "You cannot delete your own account" }, { status: 400 });
+  }
+
+  await connectDB();
+  const user = await User.findByIdAndDelete(id);
+  if (!user) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  logActivity({
+    actorId: actor.sub,
+    actorName: actor.name,
+    action: `Deleted member ${user.name}`,
+    targetType: "user",
+    targetId: id,
+    targetLabel: user.name,
+  });
+
+  return NextResponse.json({ ok: true });
+}

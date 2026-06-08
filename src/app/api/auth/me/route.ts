@@ -1,16 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { headers } from "next/headers";
 import { z } from "zod";
 import connectDB from "@/lib/db";
 import User from "@/models/User";
+import { getCurrentUser } from "@/lib/auth";
 
 export async function GET() {
-  const headersList = await headers();
-  const userId = headersList.get("x-user-id");
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const currentUser = await getCurrentUser();
+  if (!currentUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   await connectDB();
-  const user = await User.findById(userId).select("-password").lean();
+  const user = await User.findById(currentUser.sub).select("-password").lean();
   if (!user) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   return NextResponse.json({
@@ -42,9 +41,9 @@ function normalizePhone(phone: string): string {
 }
 
 export async function PATCH(req: NextRequest) {
-  const headersList = await headers();
-  const userId = headersList.get("x-user-id");
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const currentUser = await getCurrentUser();
+  if (!currentUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const userId = currentUser.sub;
 
   const body = await req.json();
   const parsed = UpdateSchema.safeParse(body);

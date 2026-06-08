@@ -6,6 +6,7 @@ const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
 
 const MEMBER_PREFIXES = [
   "/dashboard",
+  "/profile",
   "/sermons",
   "/bible-study",
   "/devotionals",
@@ -72,6 +73,7 @@ export async function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     "/dashboard/:path*",
+    "/profile/:path*",
     "/sermons/:path*",
     "/bible-study/:path*",
     "/devotionals/:path*",

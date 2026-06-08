@@ -5,6 +5,7 @@ import Devotional from "@/models/Devotional";
 import { Badge } from "@/components/ui/Badge";
 import { TablePagination } from "@/components/ui/TablePagination";
 import { ContentActions } from "@/components/admin/ContentActions";
+import { EditLink } from "@/components/admin/EditLink";
 export const metadata = { title: "Manage Devotionals" };
 
 const PAGE_SIZE = 20;
@@ -41,6 +42,7 @@ export default async function AdminDevotionalsPage({
           <p className="text-center text-navy/50 font-body py-12">No devotionals yet.</p>
         ) : (
           <>
+            <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-cream-light border-b border-cream-dark">
                 <tr>
@@ -72,7 +74,7 @@ export default async function AdminDevotionalsPage({
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex items-center justify-end gap-4">
-                        <Link href={`/admin/devotionals/${d._id}/edit`} className="text-sm text-gold-dark hover:underline font-body">Edit</Link>
+                        <EditLink href={`/admin/devotionals/${d._id}/edit`} />
                         <ContentActions
                           id={d._id.toString()}
                           apiBase="/api/devotionals"
@@ -87,6 +89,7 @@ export default async function AdminDevotionalsPage({
                 ))}
               </tbody>
             </table>
+            </div>
             <Suspense>
               <TablePagination currentPage={page} totalPages={totalPages} total={total} pageSize={PAGE_SIZE} />
             </Suspense>

@@ -1,7 +1,8 @@
-import Link from "next/link";
 import connectDB from "@/lib/db";
 import User from "@/models/User";
 import { Badge } from "@/components/ui/Badge";
+import { UserActions } from "@/components/admin/UserActions";
+import { UsersSearch } from "./UsersSearch";
 import { format } from "date-fns";
 
 export const metadata = { title: "Members" };
@@ -28,15 +29,10 @@ export default async function AdminUsersPage({
         </div>
       </div>
 
-      <form className="mb-6">
-        <div className="flex gap-2">
-          <input name="search" defaultValue={search} placeholder="Search by name or phone…"
-            className="flex-1 h-10 rounded-lg border border-cream-dark bg-white px-4 text-sm font-body text-navy focus:outline-none focus:ring-2 focus:ring-navy" />
-          <button type="submit" className="h-10 px-4 bg-navy text-cream rounded-lg text-sm font-body hover:bg-navy-light transition-colors">Search</button>
-        </div>
-      </form>
+      <UsersSearch initialValue={search} />
 
       <div className="bg-white border border-cream-dark rounded-xl overflow-hidden">
+        <div className="overflow-x-auto">
         <table className="w-full">
           <thead className="bg-cream-light border-b border-cream-dark">
             <tr>
@@ -64,12 +60,13 @@ export default async function AdminUsersPage({
                   {format(new Date(u.createdAt), "MMM d, yyyy")}
                 </td>
                 <td className="px-5 py-3 text-right">
-                  <Link href={`/admin/users/${u._id}`} className="text-sm text-gold-dark hover:underline font-body">Edit</Link>
+                  <UserActions id={u._id.toString()} name={u.name} editHref={`/admin/users/${u._id}`} />
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/Badge";
 import { ScrollToTop } from "@/components/ui/ScrollToTop";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
+import { useDebounce } from "@/hooks/useDebounce";
 import { format } from "date-fns";
 
 interface Sermon {
@@ -35,10 +36,7 @@ export default function SermonsPage() {
 
   const { items: sermons, loading, hasMore, loaderRef } = useInfiniteScroll<Sermon>({ fetchFn });
 
-  function handleSearch(e: React.FormEvent) {
-    e.preventDefault();
-    setQuery(search.trim());
-  }
+  useDebounce(search, 300, (val) => setQuery(val.trim()));
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -47,22 +45,14 @@ export default function SermonsPage() {
         <p className="text-navy/60 font-body mt-1">Messages to inspire and strengthen your faith.</p>
       </div>
 
-      <form onSubmit={handleSearch} className="mb-6">
-        <div className="flex gap-2">
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search sermons…"
-            className="flex-1 h-10 rounded-lg border border-cream-dark bg-white px-4 text-sm font-body text-navy focus:outline-none focus:ring-2 focus:ring-navy"
-          />
-          <button
-            type="submit"
-            className="h-10 px-4 bg-navy text-cream rounded-lg text-sm font-body hover:bg-navy-light transition-colors"
-          >
-            Search
-          </button>
-        </div>
-      </form>
+      <div className="mb-6">
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search sermons…"
+          className="w-full h-10 rounded-lg border border-cream-dark bg-white px-4 text-sm font-body text-navy focus:outline-none focus:ring-2 focus:ring-navy"
+        />
+      </div>
 
       {sermons.length === 0 && !loading ? (
         <p className="text-center text-navy/50 font-body py-16">No sermons found.</p>
