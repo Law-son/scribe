@@ -22,7 +22,7 @@ export default function NewDevotionalPage() {
     dayNumber: "",
     weekNumber: "",
     weekTheme: "",
-    status: "pending",
+    status: "draft",
   });
 
   useEffect(() => {

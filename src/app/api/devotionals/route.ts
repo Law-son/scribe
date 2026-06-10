@@ -13,7 +13,7 @@ const CreateSchema = z.object({
   verseText: z.string().optional(),
   verseTranslation: z.string().optional(),
   content: z.object({}).passthrough(),
-  status: z.enum(["draft", "pending"]).optional(),
+  status: z.enum(["draft", "pending", "approved"]).optional(),
 });
 
 export async function GET(req: NextRequest) {
