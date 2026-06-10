@@ -1,4 +1,5 @@
 import { Node } from "@tiptap/core";
+import { stripVerseHtml } from "@/lib/bibleBooks";
 
 export const BibleVerseExtension = Node.create({
   name: "bibleVerse",
@@ -43,7 +44,7 @@ export const BibleVerseExtension = Node.create({
       [
         "p",
         { "data-verse-text": "", class: "verse-text" },
-        node.attrs.text as string,
+        stripVerseHtml(node.attrs.text as string),
       ],
       [
         "span",
