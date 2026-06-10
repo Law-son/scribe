@@ -44,6 +44,16 @@ export async function PATCH(
   }
 
   await connectDB();
+
+  // If approving, make sure it's actually visible: a future scheduledAt
+  // would otherwise hide it from the member view despite being "approved"
+  if (body.status === "approved") {
+    const existing = await Devotional.findById(id).select("scheduledAt").lean();
+    if (existing && existing.scheduledAt > new Date()) {
+      body.scheduledAt = new Date();
+    }
+  }
+
   const doc = await Devotional.findByIdAndUpdate(id, body, { new: true });
   if (!doc) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json({ id: doc._id.toString() });

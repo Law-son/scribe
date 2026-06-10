@@ -4,6 +4,12 @@ export interface BibleBook {
   chapters: number;
 }
 
+// bolls.life verse text contains embedded HTML (e.g. <i> for translator-added
+// words, <br> for poetic line breaks) - strip it so it isn't shown literally.
+export function stripVerseHtml(text: string): string {
+  return text.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+}
+
 export const BIBLE_BOOKS: BibleBook[] = [
   { id: 1, name: "Genesis", chapters: 50 },
   { id: 2, name: "Exodus", chapters: 40 },
@@ -80,6 +86,17 @@ export const TRANSLATIONS = [
   { id: "NLT", name: "New Living Translation" },
   { id: "NASB", name: "New American Standard Bible" },
   { id: "WEB", name: "World English Bible" },
+  { id: "KJV", name: "King James Version" },
+  { id: "ASV", name: "American Standard Version" },
+  { id: "AMP", name: "Amplified Bible" },
+  { id: "CSB", name: "Christian Standard Bible" },
+  { id: "RSV", name: "Revised Standard Version" },
+  { id: "NRSV", name: "New Revised Standard Version" },
+  { id: "ISV", name: "International Standard Version" },
+  { id: "GNT", name: "Good News Translation" },
+  { id: "CEV", name: "Contemporary English Version" },
+  { id: "MSG", name: "The Message" },
+  { id: "NET", name: "New English Translation" },
 ];
 
 export const DEFAULT_TRANSLATION = "NKJV";

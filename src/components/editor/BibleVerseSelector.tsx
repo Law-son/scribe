@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import type { Editor } from "@tiptap/react";
-import { BIBLE_BOOKS, TRANSLATIONS, DEFAULT_TRANSLATION } from "@/lib/bibleBooks";
+import { BIBLE_BOOKS, TRANSLATIONS, DEFAULT_TRANSLATION, stripVerseHtml } from "@/lib/bibleBooks";
 
 interface Verse {
   verse: number;
@@ -54,7 +54,7 @@ export function BibleVerseSelector({ editor }: Props) {
       .then((r) => r.json())
       .then((data) => {
         if (data.error) throw new Error(data.error);
-        const verses: Verse[] = data.verses ?? [];
+        const verses: Verse[] = (data.verses ?? []).map((v: Verse) => ({ ...v, text: stripVerseHtml(v.text) }));
         setChapterData(verses);
         // Clamp start verse to valid range
         const maxV = verses.length;

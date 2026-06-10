@@ -6,6 +6,7 @@ import {
   TRANSLATIONS,
   DEFAULT_TRANSLATION,
   parseSpokenReference,
+  stripVerseHtml,
   type BibleBook,
 } from "@/lib/bibleBooks";
 import { VOICE_BIBLE_CHANNEL, type VoiceBibleDisplayMessage } from "@/lib/voiceBibleChannel";
@@ -24,15 +25,11 @@ interface Position {
   index: number;
 }
 
-function stripTags(text: string): string {
-  return text.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
-}
-
 async function fetchChapter(translation: string, book: BibleBook, chapter: number): Promise<Verse[]> {
   const res = await fetch(`/api/bible/chapter?translation=${translation}&book=${book.id}&chapter=${chapter}`);
   const data = await res.json();
   const verses: Verse[] = data.verses ?? [];
-  return verses.map((v) => ({ ...v, text: stripTags(v.text) }));
+  return verses.map((v) => ({ ...v, text: stripVerseHtml(v.text) }));
 }
 
 export function VoiceVerseLookup() {
