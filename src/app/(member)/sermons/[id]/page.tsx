@@ -38,11 +38,13 @@ export default async function SermonPage({ params }: { params: Promise<{ id: str
   const { id } = await params;
   const headersList = await headers();
   const userId = headersList.get("x-user-id");
+  const role = headersList.get("x-user-role");
 
   await connectDB();
 
+  const query = role === "admin" ? { _id: id } : { _id: id, status: "published" as const };
   const [sermon, allComments] = await Promise.all([
-    Sermon.findOne({ _id: id, status: "published" }).lean(),
+    Sermon.findOne(query).lean(),
     Comment.find({ contentType: "sermon", contentId: id })
       .sort({ createdAt: -1 })
       .limit(100)
@@ -87,6 +89,11 @@ export default async function SermonPage({ params }: { params: Promise<{ id: str
       <ViewTracker contentType="sermons" contentId={id} />
 
       <article className="max-w-2xl mx-auto px-4 py-8 lg:py-12">
+        {sermon.status !== "published" && (
+          <div className="mb-6 rounded-lg bg-gold/10 border border-gold/30 px-4 py-2.5 text-sm font-body text-gold-dark">
+            Preview mode — this sermon is currently a draft and not visible to members.
+          </div>
+        )}
         <nav className="mb-6">
           <Link href="/sermons" className="text-sm text-navy/50 font-body hover:text-navy">
             ← All Sermons

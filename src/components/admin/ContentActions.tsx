@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, Trash2 } from "lucide-react";
+import { Eye, EyeOff, ExternalLink, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 
 interface ContentActionsProps {
@@ -12,6 +12,7 @@ interface ContentActionsProps {
   publishedStatus?: string; // what "published" looks like for this content type (default "published")
   draftStatus?: string;     // what "hidden/draft" looks like (default "draft")
   label?: string; // for confirm dialog
+  previewHref?: string; // if set, shows a button that opens the resource in preview mode
 }
 
 export function ContentActions({
@@ -21,6 +22,7 @@ export function ContentActions({
   publishedStatus = "published",
   draftStatus = "draft",
   label = "this item",
+  previewHref,
 }: ContentActionsProps) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -36,7 +38,7 @@ export function ContentActions({
       const res = await fetch(`${apiBase}/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify({ status: newStatus, silent: true }),
       });
       if (!res.ok) throw new Error();
       toast.success(isVisible ? "Hidden from members" : "Now visible to members");
@@ -66,6 +68,17 @@ export function ContentActions({
   return (
     <>
       <div className="flex items-center justify-end gap-1">
+        {previewHref && (
+          <a
+            href={`${previewHref}?preview=1`}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Preview"
+            className="p-1.5 rounded-md text-navy/40 hover:text-navy hover:bg-navy/5 transition-colors"
+          >
+            <ExternalLink size={15} strokeWidth={1.75} />
+          </a>
+        )}
         {hasStatus && (
           <button
             onClick={toggleVisibility}

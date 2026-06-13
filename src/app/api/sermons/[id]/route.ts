@@ -49,6 +49,8 @@ export async function PATCH(
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const wasPublished = existing.status === "published";
+  const silent = body.silent === true;
+  delete body.silent;
 
   if (body.status === "published" && !wasPublished) {
     body.publishedAt = new Date();
@@ -57,7 +59,8 @@ export async function PATCH(
   Object.assign(existing, body);
   await existing.save();
 
-  if (body.status === "published" && !wasPublished) {
+  // Skip SMS when the change came from a silent visibility toggle on the dashboard
+  if (body.status === "published" && !wasPublished && !silent) {
     const url = `${process.env.NEXT_PUBLIC_APP_URL}/sermons/${id}`;
     Promise.resolve().then(() =>
       broadcastToAllMembers(SMS_TEMPLATES.sermon(existing.title, url))

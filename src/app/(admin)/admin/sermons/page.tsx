@@ -80,6 +80,7 @@ export default async function AdminSermonsPage({
                           apiBase="/api/sermons"
                           status={s.status}
                           label={s.title}
+                          previewHref={`/sermons/${s._id}`}
                         />
                       </div>
                     </td>

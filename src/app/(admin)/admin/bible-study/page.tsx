@@ -72,6 +72,7 @@ export default async function AdminBibleStudyPage({
                           apiBase="/api/bible-study"
                           status={n.status}
                           label={n.topic ?? n.title ?? "this note"}
+                          previewHref={`/bible-study/${n._id}`}
                         />
                       </div>
                     </td>

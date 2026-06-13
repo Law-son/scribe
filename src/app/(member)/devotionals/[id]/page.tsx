@@ -36,11 +36,16 @@ export default async function DevotionalDetailPage({ params }: { params: Promise
   const { id } = await params;
   const headersList = await headers();
   const userId = headersList.get("x-user-id");
+  const role = headersList.get("x-user-role");
   const now = new Date();
 
   await connectDB();
+  const query =
+    role === "admin"
+      ? { _id: id }
+      : { _id: id, status: "approved" as const, scheduledAt: { $lte: now } };
   const [doc, allComments] = await Promise.all([
-    Devotional.findOne({ _id: id, status: "approved" as const, scheduledAt: { $lte: now } }).lean(),
+    Devotional.findOne(query).lean(),
     Comment.find({ contentType: "devotional", contentId: id })
       .sort({ createdAt: -1 })
       .limit(100)
@@ -82,6 +87,11 @@ export default async function DevotionalDetailPage({ params }: { params: Promise
       <ReadingProgress />
       <ViewTracker contentType="devotionals" contentId={id} />
       <article className="max-w-2xl mx-auto px-4 py-8 lg:py-12">
+        {(doc.status !== "approved" || doc.scheduledAt > now) && (
+          <div className="mb-6 rounded-lg bg-gold/10 border border-gold/30 px-4 py-2.5 text-sm font-body text-gold-dark">
+            Preview mode — this devotional is not yet visible to members.
+          </div>
+        )}
         <nav className="mb-6">
           <Link href="/devotionals" className="text-sm text-navy/50 font-body hover:text-navy">← Devotionals</Link>
         </nav>

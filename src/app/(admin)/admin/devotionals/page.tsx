@@ -82,6 +82,7 @@ export default async function AdminDevotionalsPage({
                           publishedStatus="approved"
                           draftStatus="draft"
                           label={d.topic ?? d.title ?? "this devotional"}
+                          previewHref={`/devotionals/${d._id}`}
                         />
                       </div>
                     </td>

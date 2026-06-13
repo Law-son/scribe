@@ -37,10 +37,12 @@ export default async function BibleStudyDetailPage({ params }: { params: Promise
   const { id } = await params;
   const headersList = await headers();
   const userId = headersList.get("x-user-id");
+  const role = headersList.get("x-user-role");
 
   await connectDB();
+  const query = role === "admin" ? { _id: id } : { _id: id, status: "published" as const };
   const [doc, allComments] = await Promise.all([
-    BibleStudy.findOne({ _id: id, status: "published" }).lean(),
+    BibleStudy.findOne(query).lean(),
     Comment.find({ contentType: "bible_study", contentId: id })
       .sort({ createdAt: -1 })
       .limit(100)
@@ -81,6 +83,11 @@ export default async function BibleStudyDetailPage({ params }: { params: Promise
       <ReadingProgress />
       <ViewTracker contentType="bible-study" contentId={id} />
       <article className="max-w-2xl mx-auto px-4 py-8 lg:py-12">
+        {doc.status !== "published" && (
+          <div className="mb-6 rounded-lg bg-gold/10 border border-gold/30 px-4 py-2.5 text-sm font-body text-gold-dark">
+            Preview mode — this note is currently a draft and not visible to members.
+          </div>
+        )}
         <nav className="mb-6">
           <Link href="/bible-study" className="text-sm text-navy/50 font-body hover:text-navy">← All Bible Study Notes</Link>
         </nav>

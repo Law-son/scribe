@@ -38,12 +38,15 @@ export async function PATCH(
   if (!doc) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const wasPublished = doc.status === "published";
+  const silent = body.silent === true;
+  delete body.silent;
   if (body.status === "published" && !wasPublished) body.publishedAt = new Date();
   Object.assign(doc, body);
   await doc.save();
 
-  // Fire SMS when transitioning from draft → published
-  if (body.status === "published" && !wasPublished) {
+  // Fire SMS when transitioning from draft → published, unless the change
+  // came from a silent visibility toggle on the dashboard
+  if (body.status === "published" && !wasPublished && !silent) {
     const url = `${process.env.NEXT_PUBLIC_APP_URL}/bible-study/${doc._id}`;
     Promise.resolve().then(() => broadcastToAllMembers(SMS_TEMPLATES.bibleStudy(url)));
   }
