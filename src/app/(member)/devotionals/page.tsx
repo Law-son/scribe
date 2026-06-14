@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback } from "react";
-import Link from "next/link";
 import { ScrollToTop } from "@/components/ui/ScrollToTop";
+import { ContentCard } from "@/components/content/ContentCard";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 
 interface Devotional {
@@ -34,12 +34,28 @@ export default function DevotionalsPage() {
       {devotionals.length === 0 && !loading ? (
         <p className="text-center text-navy/50 font-body py-16">No devotionals available yet.</p>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-5">
           {devotionals.map((d, i) => {
             const displayTitle = d.topic ?? d.title ?? "Devotional";
+            const weekMeta =
+              d.weekNumber || d.weekTheme
+                ? [d.weekNumber ? `Week ${d.weekNumber}` : null, d.weekTheme].filter(Boolean).join(" · ")
+                : undefined;
             return (
-              <Link key={d.id} href={`/devotionals/${d.id}`}>
-                <div className={`bg-white border rounded-xl p-6 hover:shadow-md transition-all flex gap-4 ${i === 0 ? "border-gold/40 shadow-sm" : "border-cream-dark"}`}>
+              <ContentCard
+                key={d.id}
+                href={`/devotionals/${d.id}`}
+                title={displayTitle}
+                description={d.verse}
+                meta={weekMeta}
+                accent={i === 0 ? "gold" : "navy"}
+                topRight={
+                  i === 0 ? (
+                    <span className="text-xs font-body text-gold-dark font-semibold">Latest</span>
+                  ) : undefined
+                }
+                likesCount={d.likesCount ?? 0}
+                leading={
                   <div className="flex-shrink-0 text-center min-w-[48px]">
                     {d.dayNumber ? (
                       <>
@@ -50,21 +66,8 @@ export default function DevotionalsPage() {
                       <div className="w-10 h-10 rounded-full bg-cream-dark" />
                     )}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    {i === 0 && <span className="text-xs font-body text-gold-dark font-semibold block mb-0.5">Latest</span>}
-                    <h2 className="font-heading text-lg font-semibold text-navy leading-snug">{displayTitle}</h2>
-                    {d.verse && <p className="text-sm text-navy/60 font-body mt-0.5 italic">{d.verse}</p>}
-                    {(d.weekNumber || d.weekTheme) && (
-                      <p className="text-xs text-navy/40 font-body mt-1">
-                        {d.weekNumber && `Week ${d.weekNumber}`}
-                        {d.weekNumber && d.weekTheme && " · "}
-                        {d.weekTheme}
-                      </p>
-                    )}
-                  </div>
-                  <div className="text-xs text-gray-400 font-body flex-shrink-0 pt-1">❤️ {d.likesCount ?? 0}</div>
-                </div>
-              </Link>
+                }
+              />
             );
           })}
         </div>

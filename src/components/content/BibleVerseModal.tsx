@@ -1,14 +1,14 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { BIBLE_BOOKS, TRANSLATIONS, parseReference } from "@/lib/bibleBooks";
+import { BIBLE_BOOKS, TRANSLATIONS, parseReference, stripVerseHtml } from "@/lib/bibleBooks";
 
 interface Verse {
   verse: number;
   text: string;
 }
 
-interface ModalState {
+export interface VerseModalState {
   bookId: number;
   chapter: number;
   verse: number;
@@ -16,12 +16,12 @@ interface ModalState {
 }
 
 interface Props {
-  initial: ModalState;
+  initial: VerseModalState;
   onClose: () => void;
 }
 
-function VerseModal({ initial, onClose }: Props) {
-  const [state, setState] = useState<ModalState>(initial);
+export function VerseModal({ initial, onClose }: Props) {
+  const [state, setState] = useState<VerseModalState>(initial);
   const [chapterData, setChapterData] = useState<Verse[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -29,7 +29,7 @@ function VerseModal({ initial, onClose }: Props) {
   const currentVerse = chapterData.find((v) => v.verse === state.verse);
 
   const fetchChapter = useCallback(
-    (s: ModalState) => {
+    (s: VerseModalState) => {
       setLoading(true);
       fetch(`/api/bible/chapter?translation=${s.translation}&book=${s.bookId}&chapter=${s.chapter}`)
         .then((r) => r.json())
@@ -41,7 +41,7 @@ function VerseModal({ initial, onClose }: Props) {
 
   useEffect(() => { fetchChapter(state); }, [state.bookId, state.chapter, state.translation]); // eslint-disable-line
 
-  function update(patch: Partial<ModalState>) {
+  function update(patch: Partial<VerseModalState>) {
     setState((s) => ({ ...s, ...patch }));
   }
 
@@ -95,7 +95,7 @@ function VerseModal({ initial, onClose }: Props) {
             <p className="text-navy/40 text-sm font-body italic w-full text-center">Loading…</p>
           ) : currentVerse ? (
             <p className="font-heading text-navy-dark text-lg leading-relaxed italic">
-              &ldquo;{currentVerse.text}&rdquo;
+              &ldquo;{stripVerseHtml(currentVerse.text)}&rdquo;
             </p>
           ) : (
             <p className="text-navy/40 text-sm font-body w-full text-center">Verse not found</p>

@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import Link from "next/link";
 import { Badge } from "@/components/ui/Badge";
 import { ScrollToTop } from "@/components/ui/ScrollToTop";
+import { ContentCard } from "@/components/content/ContentCard";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import { useDebounce } from "@/hooks/useDebounce";
 import { format } from "date-fns";
@@ -57,26 +57,21 @@ export default function SermonsPage() {
       {sermons.length === 0 && !loading ? (
         <p className="text-center text-navy/50 font-body py-16">No sermons found.</p>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-5 sm:grid-cols-2 lg:gap-6">
           {sermons.map((s) => (
-            <Link key={s.id} href={`/sermons/${s.id}`}>
-              <div className="bg-white border border-cream-dark rounded-xl p-6 hover:border-navy/30 hover:shadow-md transition-all h-full">
-                <div className="flex flex-wrap gap-2 mb-3">
-                  {s.tags?.slice(0, 2).map((tag: string) => (
-                    <Badge key={tag} variant="navy">{tag}</Badge>
-                  ))}
-                </div>
-                <h2 className="font-heading text-lg font-semibold text-navy mb-1 leading-snug">{s.title}</h2>
-                <p className="text-sm text-navy/60 font-body">{s.preacher}</p>
-                <p className="text-xs text-gray-400 font-body mt-1">
-                  {format(new Date(s.date ?? s.publishedAt ?? s.createdAt), "MMMM d, yyyy")}
-                </p>
-                <div className="flex gap-4 mt-4 text-xs text-gray-400 font-body">
-                  <span>👁 {s.viewsCount ?? 0}</span>
-                  <span>❤️ {s.likesCount ?? 0}</span>
-                </div>
-              </div>
-            </Link>
+            <ContentCard
+              key={s.id}
+              href={`/sermons/${s.id}`}
+              title={s.title}
+              description={s.preacher}
+              meta={format(new Date(s.date ?? s.publishedAt ?? s.createdAt), "MMMM d, yyyy")}
+              accent="gold"
+              badges={s.tags?.slice(0, 2).map((tag) => (
+                <Badge key={tag} variant="navy">{tag}</Badge>
+              ))}
+              viewsCount={s.viewsCount ?? 0}
+              likesCount={s.likesCount ?? 0}
+            />
           ))}
         </div>
       )}

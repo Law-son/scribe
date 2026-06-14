@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import Link from "next/link";
 import { ScrollToTop } from "@/components/ui/ScrollToTop";
+import { ContentCard } from "@/components/content/ContentCard";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import { useDebounce } from "@/hooks/useDebounce";
 import { format } from "date-fns";
@@ -54,22 +54,19 @@ export default function BibleStudyPage() {
       {notes.length === 0 && !loading ? (
         <p className="text-center text-navy/50 font-body py-16">No notes found.</p>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-5 sm:grid-cols-2 lg:gap-6">
           {notes.map((n) => {
             const displayTopic = n.topic ?? n.title ?? "Bible Study";
             return (
-              <Link key={n.id} href={`/bible-study/${n.id}`}>
-                <div className="bg-white border border-cream-dark rounded-xl p-6 hover:border-navy/30 hover:shadow-md transition-all h-full border-l-4 border-l-forest">
-                  <h2 className="font-heading text-lg font-semibold text-navy mb-1 leading-snug">{displayTopic}</h2>
-                  <p className="text-xs text-gray-400 font-body mt-1">
-                    {format(new Date(n.date ?? n.publishedAt ?? new Date()), "MMMM d, yyyy")}
-                  </p>
-                  <div className="flex gap-4 mt-4 text-xs text-gray-400 font-body">
-                    <span>👁 {n.viewsCount ?? 0}</span>
-                    <span>❤️ {n.likesCount ?? 0}</span>
-                  </div>
-                </div>
-              </Link>
+              <ContentCard
+                key={n.id}
+                href={`/bible-study/${n.id}`}
+                title={displayTopic}
+                meta={format(new Date(n.date ?? n.publishedAt ?? new Date()), "MMMM d, yyyy")}
+                accent="forest"
+                viewsCount={n.viewsCount ?? 0}
+                likesCount={n.likesCount ?? 0}
+              />
             );
           })}
         </div>

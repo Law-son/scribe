@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import type { Editor } from "@tiptap/react";
 import { BIBLE_BOOKS, TRANSLATIONS, DEFAULT_TRANSLATION, stripVerseHtml } from "@/lib/bibleBooks";
+import { VerseModal, type VerseModalState } from "@/components/content/BibleVerseModal";
 
 interface Verse {
   verse: number;
@@ -24,6 +25,7 @@ export function BibleVerseSelector({ editor }: Props) {
   const [chapterData, setChapterData] = useState<Verse[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [previewModal, setPreviewModal] = useState<VerseModalState | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const book = BIBLE_BOOKS[bookIdx];
@@ -81,6 +83,7 @@ export function BibleVerseSelector({ editor }: Props) {
       attrs: { reference, text: previewText, translation },
     }).run();
     setOpen(false);
+    setPreviewModal({ bookId: book.id, chapter, verse: verseStart, translation });
   }
 
   const canInsert = rangeVerses.length > 0 && !loading;
@@ -196,6 +199,10 @@ export function BibleVerseSelector({ editor }: Props) {
             </button>
           </div>
         </div>
+      )}
+
+      {previewModal && (
+        <VerseModal initial={previewModal} onClose={() => setPreviewModal(null)} />
       )}
     </div>
   );

@@ -32,9 +32,9 @@ export default function QuotesPage() {
       {quotes.length === 0 && !loading ? (
         <p className="text-center text-navy/50 font-body py-16">No quotes yet.</p>
       ) : (
-        <div className="space-y-5">
+        <div className="space-y-6">
           {quotes.map((q) => (
-            <div key={q.id} className="bg-white border border-cream-dark rounded-2xl p-7 hover:border-gold/40 transition-colors">
+            <div key={q.id} className="bg-white border border-cream-dark rounded-2xl p-6 sm:p-7 hover:border-gold/40 hover:shadow-md transition-all">
               <p className="font-heading text-xl text-navy-dark italic leading-relaxed mb-4">
                 &ldquo;{q.text}&rdquo;
               </p>
