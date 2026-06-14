@@ -69,6 +69,7 @@ export default function EditDevotionalPage() {
         dayNumber: parseInt(form.dayNumber) || 1,
         weekNumber: form.weekNumber,
         weekTheme: form.weekTheme,
+        status: form.status,
         verse: verse?.reference ?? null,
         verseText: verse?.text ?? null,
         verseTranslation: verse?.translation ?? null,
@@ -105,11 +106,7 @@ export default function EditDevotionalPage() {
               type="number"
               min="1"
               value={form.dayNumber}
-              onChange={(e) => {
-                const d = parseInt(e.target.value) || 1;
-                const week = String(Math.ceil(d / 7)).padStart(2, "0");
-                setForm((f) => ({ ...f, dayNumber: e.target.value, weekNumber: week }));
-              }}
+              onChange={(e) => set("dayNumber", e.target.value)}
             />
             <Input
               label="Week Number"
