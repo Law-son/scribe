@@ -268,9 +268,11 @@ const BOOK_ALIASES: Array<{ from: string; to: string }> = [
   { from: "efishans", to: "ephesians" },
   { from: "efeshans", to: "ephesians" },
   { from: "efesians", to: "ephesians" },
+  { from: "efficient", to: "ephesians" },
   // Philippians
   { from: "filipians", to: "philippians" },
   { from: "filipeans", to: "philippians" },
+  { from: "philippines", to: "philippians" },
   // Colossians
   { from: "colossions", to: "colossians" },
   { from: "colosians", to: "colossians" },
