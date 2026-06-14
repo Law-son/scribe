@@ -100,7 +100,21 @@ body {
   margin-bottom: 1.25em;
 }
 
+.prose-church ul {
+  list-style: disc;
+}
+
+.prose-church ol {
+  list-style: decimal;
+}
+
+.prose-church ul ul,
+.prose-church ol ul {
+  list-style: circle;
+}
+
 .prose-church li { margin-bottom: 0.375em; }
+.prose-church li::marker { color: var(--color-gold-dark); }
 
 /* Tiptap editor */
 .tiptap-editor .ProseMirror {
