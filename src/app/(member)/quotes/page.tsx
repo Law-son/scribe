@@ -5,6 +5,7 @@ import { LikeButton } from "@/components/content/LikeButton";
 import { ShareButton } from "@/components/content/ShareButton";
 import { ScrollToTop } from "@/components/ui/ScrollToTop";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
+import { stripVerseHtml } from "@/lib/bibleBooks";
 
 interface Quote {
   id: string;
@@ -36,7 +37,7 @@ export default function QuotesPage() {
           {quotes.map((q) => (
             <div key={q.id} className="bg-white border border-cream-dark rounded-2xl p-6 sm:p-7 hover:border-gold/40 hover:shadow-md transition-all">
               <p className="font-heading text-xl text-navy-dark italic leading-relaxed mb-4">
-                &ldquo;{q.text}&rdquo;
+                &ldquo;{stripVerseHtml(q.text)}&rdquo;
               </p>
               <div className="flex items-center justify-between gap-2">
                 <span className="text-sm font-body text-gold-dark font-medium">— {q.author}</span>

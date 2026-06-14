@@ -6,6 +6,7 @@ import Devotional from "@/models/Devotional";
 import Comment from "@/models/Comment";
 import { RichTextRenderer } from "@/components/content/RichTextRenderer";
 import { BibleVerseModal } from "@/components/content/BibleVerseModal";
+import { stripVerseHtml } from "@/lib/bibleBooks";
 import { LikeButton } from "@/components/content/LikeButton";
 import { ShareButton } from "@/components/content/ShareButton";
 import { CommentSection } from "@/components/content/CommentSection";
@@ -116,18 +117,25 @@ export default async function DevotionalDetailPage({ params }: { params: Promise
           {displayTitle}
         </h1>
 
-        {doc.verse && (
-          <div className="bg-cream border border-gold/30 rounded-xl px-6 py-4 mb-8">
-            <p className="text-sm text-gold-dark font-body font-semibold mb-1">{doc.verse}</p>
-            {doc.verseText && (
-              <p className="font-heading text-navy-dark italic leading-relaxed">&ldquo;{doc.verseText}&rdquo;</p>
-            )}
-          </div>
-        )}
+        <BibleVerseModal>
+          {doc.verse && (
+            <div
+              data-bible-verse="true"
+              data-reference={doc.verse}
+              data-translation={doc.verseTranslation ?? "KJV"}
+              className="bg-cream border border-gold/30 rounded-xl px-6 py-4 mb-8 hover:border-gold/60 transition-colors"
+            >
+              <p className="text-sm text-gold-dark font-body font-semibold mb-1">{doc.verse}</p>
+              {doc.verseText && (
+                <p className="font-heading text-navy-dark italic leading-relaxed">&ldquo;{stripVerseHtml(doc.verseText)}&rdquo;</p>
+              )}
+            </div>
+          )}
 
-        <div className="border-t border-cream-dark pt-6 mb-6" />
+          <div className="border-t border-cream-dark pt-6 mb-6" />
 
-        <BibleVerseModal><RichTextRenderer content={doc.content} className="mb-10" /></BibleVerseModal>
+          <RichTextRenderer content={doc.content} className="mb-10" />
+        </BibleVerseModal>
 
         <div className="flex items-center gap-4 py-6 border-t border-b border-cream-dark mb-8">
           <LikeButton contentType="devotionals" contentId={id} initialLiked={isLiked} initialCount={doc.likesCount} />
