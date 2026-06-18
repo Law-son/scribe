@@ -16,7 +16,13 @@ export async function GET(request: Request) {
       { next: { revalidate: 86400 } } // cache for 24h — scripture doesn't change
     );
     if (!res.ok) throw new Error(`bolls.life responded ${res.status}`);
-    const verses = await res.json();
+    const raw = await res.json();
+    // KJV and ASV embed Strong's concordance numbers directly in the text (e.g. "For1063 God2316").
+    // Strip them: a letter immediately followed by digits is always a Strong's suffix.
+    const verses = raw.map((v: { verse: number; text: string }) => ({
+      ...v,
+      text: v.text.replace(/([a-zA-Z])(\d+)/g, "$1"),
+    }));
     return NextResponse.json({ verses });
   } catch (err) {
     console.error("Bible API error:", err);
