@@ -7,23 +7,39 @@ import { Button } from "@/components/ui/Button";
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
 import toast from "react-hot-toast";
+import { GENDER_OPTIONS, MEMBERSHIP_OPTIONS, LEVEL_OPTIONS, DEPARTMENT_OPTIONS, RELATIONSHIP_OPTIONS } from "@/lib/userOptions";
 
 interface Profile {
   id: string;
   name: string;
   phone: string;
+  whatsapp: string;
+  email: string;
+  dateOfBirth: string;
   gender: string;
   membershipType: string;
+  programmeOfStudy: string;
+  level: string;
   location: string;
+  departmentInChurch: string;
+  emergencyContactName: string;
+  emergencyContactPhone: string;
+  emergencyContactRelationship: string;
   role: string;
   totalPoints: number;
 }
+
+const emptyForm = {
+  name: "", phone: "", whatsapp: "", email: "", dateOfBirth: "", gender: "",
+  membershipType: "", programmeOfStudy: "", level: "", location: "", departmentInChurch: "",
+  emergencyContactName: "", emergencyContactPhone: "", emergencyContactRelationship: "",
+};
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ name: "", phone: "", gender: "", membershipType: "", location: "" });
+  const [form, setForm] = useState(emptyForm);
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -33,9 +49,18 @@ export default function ProfilePage() {
         setForm({
           name: data.name,
           phone: data.phone,
+          whatsapp: data.whatsapp,
+          email: data.email,
+          dateOfBirth: data.dateOfBirth,
           gender: data.gender,
           membershipType: data.membershipType,
+          programmeOfStudy: data.programmeOfStudy,
+          level: data.level,
           location: data.location,
+          departmentInChurch: data.departmentInChurch,
+          emergencyContactName: data.emergencyContactName,
+          emergencyContactPhone: data.emergencyContactPhone,
+          emergencyContactRelationship: data.emergencyContactRelationship,
         });
       })
       .finally(() => setLoading(false));
@@ -49,10 +74,13 @@ export default function ProfilePage() {
     e.preventDefault();
     setSaving(true);
     try {
+      const payload = Object.fromEntries(
+        Object.entries(form).filter(([, value]) => value.trim() !== "")
+      );
       const res = await fetch("/api/auth/me", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -103,61 +131,47 @@ export default function ProfilePage() {
       </div>
 
       {/* Edit form */}
-      <div className="bg-white rounded-2xl border border-cream-dark shadow-sm p-6">
-        <h2 className="font-heading text-lg text-navy font-semibold mb-6">Edit Details</h2>
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <Input
-            label="Full Name"
-            value={form.name}
-            onChange={(e) => set("name", e.target.value)}
-            required
-          />
-
-          <Input
-            label="Phone Number"
-            type="tel"
-            value={form.phone}
-            onChange={(e) => set("phone", e.target.value)}
-            required
-          />
-
-          <div className="grid grid-cols-2 gap-4">
-            <Select
-              label="Gender"
-              value={form.gender}
-              onChange={(e) => set("gender", e.target.value)}
-              options={[
-                { value: "male", label: "Male" },
-                { value: "female", label: "Female" },
-              ]}
-            />
-            <Select
-              label="Membership Type"
-              value={form.membershipType}
-              onChange={(e) => set("membershipType", e.target.value)}
-              options={[
-                { value: "member", label: "Member" },
-                { value: "visitor", label: "Visitor" },
-                { value: "invitee", label: "Invitee" },
-                { value: "convert", label: "New Convert" },
-              ]}
-            />
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="bg-white rounded-2xl border border-cream-dark shadow-sm p-6">
+          <h2 className="font-heading text-lg text-navy font-semibold mb-6">Personal Details</h2>
+          <div className="space-y-4">
+            <Input label="Full Name" value={form.name} onChange={(e) => set("name", e.target.value)} required />
+            <Input label="Date of Birth" type="date" value={form.dateOfBirth} onChange={(e) => set("dateOfBirth", e.target.value)} />
+            <div className="grid grid-cols-2 gap-4">
+              <Select label="Gender" value={form.gender} onChange={(e) => set("gender", e.target.value)} options={GENDER_OPTIONS} />
+              <Input label="Phone Number" type="tel" value={form.phone} onChange={(e) => set("phone", e.target.value)} required />
+            </div>
+            <Input label="WhatsApp Number" type="tel" value={form.whatsapp} onChange={(e) => set("whatsapp", e.target.value)} />
+            <Input label="Email Address" type="email" value={form.email} onChange={(e) => set("email", e.target.value)} />
           </div>
+        </div>
 
-          <Input
-            label="Location / City"
-            value={form.location}
-            onChange={(e) => set("location", e.target.value)}
-            required
-          />
-
-          <div className="pt-2">
-            <Button type="submit" loading={saving}>
-              Save Changes
-            </Button>
+        <div className="bg-white rounded-2xl border border-cream-dark shadow-sm p-6">
+          <h2 className="font-heading text-lg text-navy font-semibold mb-6">Academic & Church Info</h2>
+          <div className="space-y-4">
+            <Input label="Programme of Study" value={form.programmeOfStudy} onChange={(e) => set("programmeOfStudy", e.target.value)} />
+            <div className="grid grid-cols-2 gap-4">
+              <Select label="Level / Year" value={form.level} onChange={(e) => set("level", e.target.value)} options={LEVEL_OPTIONS} />
+              <Select label="Membership Type" value={form.membershipType} onChange={(e) => set("membershipType", e.target.value)} options={MEMBERSHIP_OPTIONS} />
+            </div>
+            <Input label="Location/Name of Hostel" value={form.location} onChange={(e) => set("location", e.target.value)} required />
+            <Select label="Department in the Church" value={form.departmentInChurch} onChange={(e) => set("departmentInChurch", e.target.value)} options={DEPARTMENT_OPTIONS} />
           </div>
-        </form>
-      </div>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-cream-dark shadow-sm p-6">
+          <h2 className="font-heading text-lg text-navy font-semibold mb-6">Emergency Contact</h2>
+          <div className="space-y-4">
+            <Input label="Emergency Contact Name" value={form.emergencyContactName} onChange={(e) => set("emergencyContactName", e.target.value)} />
+            <Input label="Emergency Contact Number" type="tel" value={form.emergencyContactPhone} onChange={(e) => set("emergencyContactPhone", e.target.value)} />
+            <Select label="Relationship to Emergency Contact" value={form.emergencyContactRelationship} onChange={(e) => set("emergencyContactRelationship", e.target.value)} options={RELATIONSHIP_OPTIONS} />
+          </div>
+        </div>
+
+        <Button type="submit" loading={saving}>
+          Save Changes
+        </Button>
+      </form>
     </div>
   );
 }

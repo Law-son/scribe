@@ -6,13 +6,23 @@ import User from "@/models/User";
 import { signToken, setAuthCookie } from "@/lib/auth";
 import { sendSMS } from "@/lib/sms";
 import { awardPoints } from "@/lib/points";
+import { GENDER_VALUES, MEMBERSHIP_VALUES, LEVEL_VALUES, DEPARTMENT_VALUES, RELATIONSHIP_VALUES } from "@/lib/userOptions";
 
 const RegisterSchema = z.object({
   name: z.string().min(2).max(100),
   phone: z.string().min(7).max(20),
-  gender: z.enum(["male", "female"]),
-  membershipType: z.enum(["member", "visitor", "invitee", "convert"]),
+  whatsapp: z.string().min(7).max(20),
+  email: z.string().email(),
+  dateOfBirth: z.coerce.date(),
+  gender: z.enum(GENDER_VALUES),
+  membershipType: z.enum(MEMBERSHIP_VALUES),
+  programmeOfStudy: z.string().min(2).max(150),
+  level: z.enum(LEVEL_VALUES),
   location: z.string().min(2).max(200),
+  departmentInChurch: z.enum(DEPARTMENT_VALUES),
+  emergencyContactName: z.string().min(2).max(100),
+  emergencyContactPhone: z.string().min(7).max(20),
+  emergencyContactRelationship: z.enum(RELATIONSHIP_VALUES),
   password: z.string().min(6).max(100),
   referredBy: z.string().optional(),
 });
@@ -39,16 +49,27 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { name, phone, gender, membershipType, location, password, referredBy } =
-      parsed.data;
+    const {
+      name, phone, whatsapp, email, dateOfBirth, gender, membershipType,
+      programmeOfStudy, level, location, departmentInChurch,
+      emergencyContactName, emergencyContactPhone, emergencyContactRelationship,
+      password, referredBy,
+    } = parsed.data;
 
     await connectDB();
 
     const normalizedPhone = normalizePhone(phone);
-    const existing = await User.findOne({ phone: normalizedPhone });
+    const existing = await User.findOne({
+      $or: [{ phone: normalizedPhone }, { email: email.toLowerCase() }],
+    });
     if (existing) {
       return NextResponse.json(
-        { error: "An account with this phone number already exists" },
+        {
+          error:
+            existing.phone === normalizedPhone
+              ? "An account with this phone number already exists"
+              : "An account with this email address already exists",
+        },
         { status: 409 }
       );
     }
@@ -58,9 +79,18 @@ export async function POST(req: NextRequest) {
     const user = await User.create({
       name,
       phone: normalizedPhone,
+      whatsapp: normalizePhone(whatsapp),
+      email: email.toLowerCase(),
+      dateOfBirth,
       gender,
       membershipType,
+      programmeOfStudy,
+      level,
       location,
+      departmentInChurch,
+      emergencyContactName,
+      emergencyContactPhone: normalizePhone(emergencyContactPhone),
+      emergencyContactRelationship,
       password: hashedPassword,
       role: "member",
       referredBy: referredBy || undefined,

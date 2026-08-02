@@ -3,6 +3,7 @@ import { z } from "zod";
 import connectDB from "@/lib/db";
 import User from "@/models/User";
 import { getCurrentUser } from "@/lib/auth";
+import { GENDER_VALUES, MEMBERSHIP_VALUES, LEVEL_VALUES, DEPARTMENT_VALUES, RELATIONSHIP_VALUES } from "@/lib/userOptions";
 
 export async function GET() {
   const currentUser = await getCurrentUser();
@@ -16,10 +17,19 @@ export async function GET() {
     id: user._id.toString(),
     name: user.name,
     phone: user.phone,
+    whatsapp: user.whatsapp ?? "",
+    email: user.email ?? "",
+    dateOfBirth: user.dateOfBirth ? new Date(user.dateOfBirth).toISOString().slice(0, 10) : "",
     role: user.role,
     totalPoints: user.totalPoints,
     membershipType: user.membershipType,
+    programmeOfStudy: user.programmeOfStudy ?? "",
+    level: user.level ?? "",
     location: user.location,
+    departmentInChurch: user.departmentInChurch ?? "",
+    emergencyContactName: user.emergencyContactName ?? "",
+    emergencyContactPhone: user.emergencyContactPhone ?? "",
+    emergencyContactRelationship: user.emergencyContactRelationship ?? "",
     gender: user.gender,
     isActive: user.isActive,
   });
@@ -28,9 +38,18 @@ export async function GET() {
 const UpdateSchema = z.object({
   name: z.string().min(2).max(100).optional(),
   phone: z.string().min(7).max(20).optional(),
-  gender: z.enum(["male", "female"]).optional(),
-  membershipType: z.enum(["member", "visitor", "invitee", "convert"]).optional(),
+  whatsapp: z.string().min(7).max(20).optional(),
+  email: z.string().email().optional(),
+  dateOfBirth: z.coerce.date().optional(),
+  gender: z.enum(GENDER_VALUES).optional(),
+  membershipType: z.enum(MEMBERSHIP_VALUES).optional(),
+  programmeOfStudy: z.string().min(2).max(150).optional(),
+  level: z.enum(LEVEL_VALUES).optional(),
   location: z.string().min(2).max(200).optional(),
+  departmentInChurch: z.enum(DEPARTMENT_VALUES).optional(),
+  emergencyContactName: z.string().min(2).max(100).optional(),
+  emergencyContactPhone: z.string().min(7).max(20).optional(),
+  emergencyContactRelationship: z.enum(RELATIONSHIP_VALUES).optional(),
 });
 
 function normalizePhone(phone: string): string {
@@ -53,7 +72,7 @@ export async function PATCH(req: NextRequest) {
 
   await connectDB();
 
-  const updates: Record<string, string> = { ...parsed.data } as Record<string, string>;
+  const updates: Record<string, unknown> = { ...parsed.data };
 
   if (parsed.data.phone) {
     const normalized = normalizePhone(parsed.data.phone);
@@ -64,6 +83,23 @@ export async function PATCH(req: NextRequest) {
     updates.phone = normalized;
   }
 
+  if (parsed.data.whatsapp) {
+    updates.whatsapp = normalizePhone(parsed.data.whatsapp);
+  }
+
+  if (parsed.data.emergencyContactPhone) {
+    updates.emergencyContactPhone = normalizePhone(parsed.data.emergencyContactPhone);
+  }
+
+  if (parsed.data.email) {
+    const normalizedEmail = parsed.data.email.toLowerCase();
+    const conflict = await User.findOne({ email: normalizedEmail, _id: { $ne: userId } }).lean();
+    if (conflict) {
+      return NextResponse.json({ error: "That email address is already in use" }, { status: 409 });
+    }
+    updates.email = normalizedEmail;
+  }
+
   const user = await User.findByIdAndUpdate(userId, { $set: updates }, { new: true }).select("-password").lean();
   if (!user) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
@@ -71,8 +107,17 @@ export async function PATCH(req: NextRequest) {
     id: user._id.toString(),
     name: user.name,
     phone: user.phone,
+    whatsapp: user.whatsapp ?? "",
+    email: user.email ?? "",
+    dateOfBirth: user.dateOfBirth ? new Date(user.dateOfBirth).toISOString().slice(0, 10) : "",
     gender: user.gender,
     membershipType: user.membershipType,
+    programmeOfStudy: user.programmeOfStudy ?? "",
+    level: user.level ?? "",
     location: user.location,
+    departmentInChurch: user.departmentInChurch ?? "",
+    emergencyContactName: user.emergencyContactName ?? "",
+    emergencyContactPhone: user.emergencyContactPhone ?? "",
+    emergencyContactRelationship: user.emergencyContactRelationship ?? "",
   });
 }

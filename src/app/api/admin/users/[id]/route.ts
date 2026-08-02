@@ -4,14 +4,33 @@ import connectDB from "@/lib/db";
 import User from "@/models/User";
 import { getCurrentUser } from "@/lib/auth";
 import { logActivity } from "@/lib/logActivity";
+import { GENDER_VALUES, MEMBERSHIP_VALUES, LEVEL_VALUES, DEPARTMENT_VALUES, RELATIONSHIP_VALUES } from "@/lib/userOptions";
 
 const UpdateSchema = z.object({
   name: z.string().min(2).optional(),
   role: z.enum(["member", "admin"]).optional(),
   isActive: z.boolean().optional(),
+  gender: z.enum(GENDER_VALUES).optional(),
+  phone: z.string().min(7).max(20).optional(),
+  whatsapp: z.string().min(7).max(20).optional(),
+  email: z.string().email().optional(),
+  dateOfBirth: z.coerce.date().optional(),
+  programmeOfStudy: z.string().min(2).max(150).optional(),
+  level: z.enum(LEVEL_VALUES).optional(),
   location: z.string().optional(),
-  membershipType: z.enum(["member", "visitor", "invitee", "convert"]).optional(),
+  membershipType: z.enum(MEMBERSHIP_VALUES).optional(),
+  departmentInChurch: z.enum(DEPARTMENT_VALUES).optional(),
+  emergencyContactName: z.string().min(2).max(100).optional(),
+  emergencyContactPhone: z.string().min(7).max(20).optional(),
+  emergencyContactRelationship: z.enum(RELATIONSHIP_VALUES).optional(),
 });
+
+function normalizePhone(phone: string): string {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.startsWith("233") && digits.length === 12) return "0" + digits.slice(3);
+  if (digits.startsWith("0") && digits.length === 10) return digits;
+  return phone;
+}
 
 async function guard() {
   const user = await getCurrentUser();
@@ -43,8 +62,26 @@ export async function PATCH(
   if (!parsed.success) return NextResponse.json({ error: "Invalid input" }, { status: 400 });
 
   await connectDB();
+
+  const updates: Record<string, unknown> = { ...parsed.data };
+
+  if (parsed.data.phone) {
+    const normalized = normalizePhone(parsed.data.phone);
+    const conflict = await User.findOne({ phone: normalized, _id: { $ne: id } }).lean();
+    if (conflict) return NextResponse.json({ error: "That phone number is already in use" }, { status: 409 });
+    updates.phone = normalized;
+  }
+  if (parsed.data.whatsapp) updates.whatsapp = normalizePhone(parsed.data.whatsapp);
+  if (parsed.data.emergencyContactPhone) updates.emergencyContactPhone = normalizePhone(parsed.data.emergencyContactPhone);
+  if (parsed.data.email) {
+    const normalizedEmail = parsed.data.email.toLowerCase();
+    const conflict = await User.findOne({ email: normalizedEmail, _id: { $ne: id } }).lean();
+    if (conflict) return NextResponse.json({ error: "That email address is already in use" }, { status: 409 });
+    updates.email = normalizedEmail;
+  }
+
   const before = await User.findById(id).select("name role isActive").lean();
-  const user = await User.findByIdAndUpdate(id, parsed.data, { new: true }).select("-password");
+  const user = await User.findByIdAndUpdate(id, updates, { new: true }).select("-password");
   if (!user) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const changes = parsed.data;
