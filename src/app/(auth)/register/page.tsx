@@ -65,14 +65,19 @@ export default function RegisterPage() {
   const [error, setError] = useState("");
   const [referralSearch, setReferralSearch] = useState("");
   const [referralResults, setReferralResults] = useState<UserSuggestion[]>([]);
+  const [referralLoading, setReferralLoading] = useState(false);
   const [selectedReferrer, setSelectedReferrer] = useState<UserSuggestion | null>(null);
   const [form, setForm] = useState<FormState>(initialForm);
 
   const searchReferrals = useCallback(async (q: string) => {
-    if (q.length < 2) { setReferralResults([]); return; }
-    const res = await fetch(`/api/users/search?q=${encodeURIComponent(q)}`);
-    const data = await res.json();
-    setReferralResults(data.users ?? []);
+    if (q.length < 2) { setReferralResults([]); setReferralLoading(false); return; }
+    try {
+      const res = await fetch(`/api/users/search?q=${encodeURIComponent(q)}`);
+      const data = await res.json();
+      setReferralResults(data.users ?? []);
+    } finally {
+      setReferralLoading(false);
+    }
   }, []);
 
   useDebounce(referralSearch, 400, searchReferrals);
@@ -230,11 +235,23 @@ export default function RegisterPage() {
                     placeholder="Search member name… (optional)"
                     value={selectedReferrer ? selectedReferrer.name : referralSearch}
                     onChange={(e) => {
+                      const value = e.target.value;
                       setSelectedReferrer(null);
-                      setReferralSearch(e.target.value);
+                      setReferralSearch(value);
+                      setReferralLoading(value.trim().length >= 2);
+                      if (value.trim().length < 2) setReferralResults([]);
                     }}
                   />
-                  {referralResults.length > 0 && !selectedReferrer && (
+                  {referralLoading && !selectedReferrer && (
+                    <span className="absolute right-3 top-8 flex items-center gap-1.5 text-xs text-navy/40 font-body">
+                      <svg className="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24" fill="none">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                      </svg>
+                      Searching…
+                    </span>
+                  )}
+                  {!referralLoading && referralResults.length > 0 && !selectedReferrer && (
                     <ul className="absolute z-10 w-full bg-white border border-cream-dark rounded-lg mt-1 shadow-lg overflow-hidden">
                       {referralResults.map((u) => (
                         <li key={u.id}>
@@ -249,6 +266,11 @@ export default function RegisterPage() {
                         </li>
                       ))}
                     </ul>
+                  )}
+                  {!referralLoading && !selectedReferrer && referralSearch.trim().length >= 2 && referralResults.length === 0 && (
+                    <p className="absolute w-full bg-white border border-cream-dark rounded-lg mt-1 shadow-lg px-4 py-2.5 text-sm font-body text-navy/40">
+                      No members found
+                    </p>
                   )}
                   {selectedReferrer && (
                     <button type="button" onClick={() => setSelectedReferrer(null)} className="absolute right-3 top-8 text-xs text-burgundy hover:underline">
