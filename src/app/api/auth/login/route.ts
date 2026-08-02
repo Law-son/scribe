@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import connectDB from "@/lib/db";
 import User from "@/models/User";
 import { signToken, setAuthCookie } from "@/lib/auth";
+import { isProfileComplete } from "@/lib/profileCompletion";
 
 const LoginSchema = z.object({
   phone: z.string().min(7),
@@ -67,6 +68,7 @@ export async function POST(req: NextRequest) {
         name: user.name,
         role: user.role,
         totalPoints: user.totalPoints,
+        profileComplete: isProfileComplete(user),
       },
     });
   } catch (err) {

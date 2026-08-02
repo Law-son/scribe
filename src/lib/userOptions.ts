@@ -1,6 +1,9 @@
+// "other" is accepted because the User schema allows it, even though the
+// registration form only offers Male/Female — keeps legacy rows submittable.
 export const GENDER_OPTIONS = [
   { value: "male", label: "Male" },
   { value: "female", label: "Female" },
+  { value: "other", label: "Other" },
 ];
 
 export const MEMBERSHIP_OPTIONS = [

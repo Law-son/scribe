@@ -26,8 +26,16 @@ export default function LoginPage() {
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? "Login failed"); return; }
-      toast.success(`Welcome back, ${data.user.name}!`);
-      router.push(data.user.role === "admin" ? "/admin" : "/dashboard");
+
+      // Admins manage their own contact details via /profile and aren't
+      // forced through the member-onboarding completion flow.
+      if (data.user.role !== "admin" && !data.user.profileComplete) {
+        toast.success(`Welcome back, ${data.user.name}! Please complete your profile.`);
+        router.push("/complete-profile");
+      } else {
+        toast.success(`Welcome back, ${data.user.name}!`);
+        router.push(data.user.role === "admin" ? "/admin" : "/dashboard");
+      }
       router.refresh();
     } catch {
       setError("Network error. Please try again.");

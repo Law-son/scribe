@@ -3,7 +3,11 @@ import { redirect } from "next/navigation";
 import { MemberNav } from "@/components/layout/MemberNav";
 import connectDB from "@/lib/db";
 import User from "@/models/User";
+import { isProfileComplete } from "@/lib/profileCompletion";
 import DailyLoginTrigger from "./DailyLoginTrigger";
+
+const COMPLETION_FIELDS =
+  "totalPoints name dateOfBirth whatsapp email programmeOfStudy level departmentInChurch emergencyContactName emergencyContactPhone emergencyContactRelationship";
 
 export default async function MemberLayout({ children }: { children: React.ReactNode }) {
   const headersList = await headers();
@@ -14,8 +18,12 @@ export default async function MemberLayout({ children }: { children: React.React
   if (!userId) redirect("/login");
 
   await connectDB();
-  const user = await User.findById(userId).select("totalPoints name").lean();
+  const user = await User.findById(userId).select(COMPLETION_FIELDS).lean();
   const totalPoints = user?.totalPoints ?? 0;
+
+  // Admins aren't forced through member onboarding — a staff account has no
+  // reason to hold a programme of study or a hostel year/level.
+  if (userRole !== "admin" && user && !isProfileComplete(user)) redirect("/complete-profile");
 
   return (
     <div className="min-h-screen bg-cream-light">

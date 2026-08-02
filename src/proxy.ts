@@ -7,6 +7,7 @@ const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
 const MEMBER_PREFIXES = [
   "/dashboard",
   "/profile",
+  "/complete-profile",
   "/sermons",
   "/bible-study",
   "/devotionals",
@@ -73,6 +74,7 @@ export const config = {
   matcher: [
     "/dashboard/:path*",
     "/profile/:path*",
+    "/complete-profile/:path*",
     "/sermons/:path*",
     "/bible-study/:path*",
     "/devotionals/:path*",
