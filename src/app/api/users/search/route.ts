@@ -1,20 +1,19 @@
 import { NextResponse } from "next/server";
-import { headers } from "next/headers";
 import connectDB from "@/lib/db";
 import User from "@/models/User";
 
+// Public: used by the (unauthenticated) registration form's referral picker,
+// as well as the authenticated preacher/speaker search in the content editor.
+// Only exposes name + id, never contact info.
 export async function GET(request: Request) {
-  const headersList = await headers();
-  const userId = headersList.get("x-user-id");
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
   const { searchParams } = new URL(request.url);
   const q = searchParams.get("q")?.trim() ?? "";
+  if (q.length < 2) return NextResponse.json({ users: [] });
 
   await connectDB();
 
   const users = await User.find(
-    q ? { name: { $regex: q, $options: "i" } } : {},
+    { name: { $regex: q, $options: "i" } },
     { name: 1 }
   )
     .limit(10)
