@@ -1,13 +1,24 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { AdminNav } from "@/components/layout/AdminNav";
+import connectDB from "@/lib/db";
+import User from "@/models/User";
+import { isProfileComplete } from "@/lib/profileCompletion";
+
+const COMPLETION_FIELDS =
+  "dateOfBirth whatsapp email programmeOfStudy level departmentInChurch emergencyContactName emergencyContactPhone emergencyContactRelationship";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const headersList = await headers();
   const role = headersList.get("x-user-role");
+  const userId = headersList.get("x-user-id");
   const userName = headersList.get("x-user-name") ?? "Admin";
 
   if (role !== "admin") redirect("/dashboard");
+
+  await connectDB();
+  const user = userId ? await User.findById(userId).select(COMPLETION_FIELDS).lean() : null;
+  if (user && !isProfileComplete(user)) redirect("/complete-profile");
 
   return (
     <div className="min-h-screen bg-cream-light">

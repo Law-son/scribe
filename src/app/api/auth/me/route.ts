@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import mongoose from "mongoose";
 import connectDB from "@/lib/db";
 import User from "@/models/User";
 import { getCurrentUser } from "@/lib/auth";
@@ -10,7 +11,10 @@ export async function GET() {
   if (!currentUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   await connectDB();
-  const user = await User.findById(currentUser.sub).select("-password").lean();
+  const user = await User.findById(currentUser.sub)
+    .select("-password")
+    .populate<{ referredBy: { _id: unknown; name: string } | null }>("referredBy", "name")
+    .lean();
   if (!user) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   return NextResponse.json({
@@ -30,6 +34,7 @@ export async function GET() {
     emergencyContactName: user.emergencyContactName ?? "",
     emergencyContactPhone: user.emergencyContactPhone ?? "",
     emergencyContactRelationship: user.emergencyContactRelationship ?? "",
+    referredBy: user.referredBy ? { id: String(user.referredBy._id), name: user.referredBy.name } : null,
     gender: user.gender,
     isActive: user.isActive,
   });
@@ -50,6 +55,7 @@ const UpdateSchema = z.object({
   emergencyContactName: z.string().min(2).max(100).optional(),
   emergencyContactPhone: z.string().min(7).max(20).optional(),
   emergencyContactRelationship: z.enum(RELATIONSHIP_VALUES).optional(),
+  referredBy: z.string().optional(),
 });
 
 function normalizePhone(phone: string): string {
@@ -98,6 +104,16 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: "That email address is already in use" }, { status: 409 });
     }
     updates.email = normalizedEmail;
+  }
+
+  if (parsed.data.referredBy) {
+    if (parsed.data.referredBy === userId || !mongoose.Types.ObjectId.isValid(parsed.data.referredBy)) {
+      return NextResponse.json({ error: "Invalid referrer selected" }, { status: 400 });
+    }
+    const referrer = await User.findById(parsed.data.referredBy).select("_id").lean();
+    if (!referrer) {
+      return NextResponse.json({ error: "Selected referrer not found" }, { status: 400 });
+    }
   }
 
   const user = await User.findByIdAndUpdate(userId, { $set: updates }, { new: true }).select("-password").lean();

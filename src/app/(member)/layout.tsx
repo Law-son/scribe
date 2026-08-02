@@ -21,9 +21,7 @@ export default async function MemberLayout({ children }: { children: React.React
   const user = await User.findById(userId).select(COMPLETION_FIELDS).lean();
   const totalPoints = user?.totalPoints ?? 0;
 
-  // Admins aren't forced through member onboarding — a staff account has no
-  // reason to hold a programme of study or a hostel year/level.
-  if (userRole !== "admin" && user && !isProfileComplete(user)) redirect("/complete-profile");
+  if (user && !isProfileComplete(user)) redirect("/complete-profile");
 
   return (
     <div className="min-h-screen bg-cream-light">

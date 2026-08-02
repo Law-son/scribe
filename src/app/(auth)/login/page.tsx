@@ -27,9 +27,7 @@ export default function LoginPage() {
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? "Login failed"); return; }
 
-      // Admins manage their own contact details via /profile and aren't
-      // forced through the member-onboarding completion flow.
-      if (data.user.role !== "admin" && !data.user.profileComplete) {
+      if (!data.user.profileComplete) {
         toast.success(`Welcome back, ${data.user.name}! Please complete your profile.`);
         router.push("/complete-profile");
       } else {

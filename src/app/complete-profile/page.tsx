@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Input } from "@/components/ui/Input";
@@ -8,8 +8,11 @@ import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
 import { PageLoader } from "@/components/ui/Spinner";
 import toast from "react-hot-toast";
+import { useDebounce } from "@/hooks/useDebounce";
 import { GENDER_OPTIONS, MEMBERSHIP_OPTIONS, LEVEL_OPTIONS, DEPARTMENT_OPTIONS, RELATIONSHIP_OPTIONS } from "@/lib/userOptions";
 import { isProfileComplete } from "@/lib/profileCompletion";
+
+interface UserSuggestion { id: string; name: string; }
 
 const emptyForm = {
   name: "", dateOfBirth: "", gender: "male", phone: "", whatsapp: "", email: "",
@@ -70,6 +73,11 @@ export default function CompleteProfilePage() {
   const [role, setRole] = useState("member");
   const [form, setForm] = useState<FormState>(emptyForm);
 
+  const [referralSearch, setReferralSearch] = useState("");
+  const [referralResults, setReferralResults] = useState<UserSuggestion[]>([]);
+  const [referralLoading, setReferralLoading] = useState(false);
+  const [selectedReferrer, setSelectedReferrer] = useState<UserSuggestion | null>(null);
+
   useEffect(() => {
     fetch("/api/auth/me")
       .then(async (r) => {
@@ -96,11 +104,25 @@ export default function CompleteProfilePage() {
           emergencyContactPhone: data.emergencyContactPhone ?? "",
           emergencyContactRelationship: data.emergencyContactRelationship || "mother",
         });
+        if (data.referredBy) setSelectedReferrer(data.referredBy);
       })
       .catch(() => setError("Couldn't load your profile. Please refresh and try again."))
       .finally(() => setFetching(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const searchReferrals = useCallback(async (q: string) => {
+    if (q.length < 2) { setReferralResults([]); setReferralLoading(false); return; }
+    try {
+      const res = await fetch(`/api/users/search?q=${encodeURIComponent(q)}`);
+      const data = await res.json();
+      setReferralResults(data.users ?? []);
+    } finally {
+      setReferralLoading(false);
+    }
+  }, []);
+
+  useDebounce(referralSearch, 400, searchReferrals);
 
   function set(key: keyof FormState, value: string) {
     setForm((f) => ({ ...f, [key]: value }));
@@ -148,7 +170,7 @@ export default function CompleteProfilePage() {
       const res = await fetch("/api/auth/me", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, referredBy: selectedReferrer?.id }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -231,6 +253,56 @@ export default function CompleteProfilePage() {
                 <Input label="Location/Name of Hostel" value={form.location} onChange={(e) => set("location", e.target.value)} required />
                 <Select label="I am a…" value={form.membershipType} onChange={(e) => set("membershipType", e.target.value)} options={MEMBERSHIP_OPTIONS} />
                 <Select label="Department in the Church" value={form.departmentInChurch} onChange={(e) => set("departmentInChurch", e.target.value)} options={DEPARTMENT_OPTIONS} />
+
+                {/* Referral search */}
+                <div className="relative">
+                  <Input
+                    label="Who invited you? (optional)"
+                    placeholder="Search member name…"
+                    value={selectedReferrer ? selectedReferrer.name : referralSearch}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setSelectedReferrer(null);
+                      setReferralSearch(value);
+                      setReferralLoading(value.trim().length >= 2);
+                      if (value.trim().length < 2) setReferralResults([]);
+                    }}
+                  />
+                  {referralLoading && !selectedReferrer && (
+                    <span className="absolute right-3 top-8 flex items-center gap-1.5 text-xs text-navy/40 font-body">
+                      <svg className="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24" fill="none">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                      </svg>
+                      Searching…
+                    </span>
+                  )}
+                  {!referralLoading && referralResults.length > 0 && !selectedReferrer && (
+                    <ul className="absolute z-10 w-full bg-white border border-cream-dark rounded-lg mt-1 shadow-lg overflow-hidden">
+                      {referralResults.map((u) => (
+                        <li key={u.id}>
+                          <button
+                            type="button"
+                            onClick={() => { setSelectedReferrer(u); setReferralSearch(""); setReferralResults([]); }}
+                            className="w-full text-left px-4 py-2.5 text-sm font-body text-navy hover:bg-cream transition-colors"
+                          >
+                            {u.name}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {!referralLoading && !selectedReferrer && referralSearch.trim().length >= 2 && referralResults.length === 0 && (
+                    <p className="absolute w-full bg-white border border-cream-dark rounded-lg mt-1 shadow-lg px-4 py-2.5 text-sm font-body text-navy/40">
+                      No members found
+                    </p>
+                  )}
+                  {selectedReferrer && (
+                    <button type="button" onClick={() => setSelectedReferrer(null)} className="absolute right-3 top-8 text-xs text-burgundy hover:underline">
+                      Clear
+                    </button>
+                  )}
+                </div>
               </>
             )}
 
