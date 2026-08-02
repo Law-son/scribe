@@ -12,7 +12,7 @@ import { GENDER_OPTIONS, MEMBERSHIP_OPTIONS, LEVEL_OPTIONS, DEPARTMENT_OPTIONS, 
 
 const emptyForm = {
   name: "", role: "member", isActive: true, gender: "", phone: "", whatsapp: "", email: "",
-  dateOfBirth: "", location: "", membershipType: "member", programmeOfStudy: "", level: "",
+  dateOfBirth: "", location: "", membershipType: "member", isStudent: true, programmeOfStudy: "", level: "",
   departmentInChurch: "", emergencyContactName: "", emergencyContactPhone: "", emergencyContactRelationship: "",
 };
 
@@ -39,6 +39,7 @@ export default function EditUserPage() {
           dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth).toISOString().slice(0, 10) : "",
           location: data.location ?? "",
           membershipType: data.membershipType ?? "member",
+          isStudent: data.isStudent ?? true,
           programmeOfStudy: data.programmeOfStudy ?? "",
           level: data.level ?? "",
           departmentInChurch: data.departmentInChurch ?? "",
@@ -92,11 +93,22 @@ export default function EditUserPage() {
 
         <div className="bg-white border border-cream-dark rounded-xl p-6 space-y-4">
           <h2 className="font-heading text-base text-navy font-semibold">Academic & Church Info</h2>
-          <Input label="Programme of Study" value={form.programmeOfStudy} onChange={(e) => set("programmeOfStudy", e.target.value)} />
-          <div className="grid grid-cols-2 gap-4">
-            <Select label="Level / Year" value={form.level} onChange={(e) => set("level", e.target.value)} options={LEVEL_OPTIONS} />
-            <Select label="Membership Type" value={form.membershipType} onChange={(e) => set("membershipType", e.target.value)} options={MEMBERSHIP_OPTIONS} />
-          </div>
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={!form.isStudent}
+              onChange={(e) => set("isStudent", !e.target.checked)}
+              className="w-4 h-4 rounded accent-forest"
+            />
+            <span className="text-sm font-body text-navy">Not a student</span>
+          </label>
+          {form.isStudent && (
+            <>
+              <Input label="Programme of Study" value={form.programmeOfStudy} onChange={(e) => set("programmeOfStudy", e.target.value)} />
+              <Select label="Level / Year" value={form.level} onChange={(e) => set("level", e.target.value)} options={LEVEL_OPTIONS} />
+            </>
+          )}
+          <Select label="Membership Type" value={form.membershipType} onChange={(e) => set("membershipType", e.target.value)} options={MEMBERSHIP_OPTIONS} />
           <Input label="Location/Name of Hostel" value={form.location} onChange={(e) => set("location", e.target.value)} />
           <Select label="Department in the Church" value={form.departmentInChurch} onChange={(e) => set("departmentInChurch", e.target.value)} options={DEPARTMENT_OPTIONS} />
         </div>

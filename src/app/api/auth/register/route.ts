@@ -16,8 +16,9 @@ const RegisterSchema = z.object({
   dateOfBirth: z.coerce.date(),
   gender: z.enum(GENDER_VALUES),
   membershipType: z.enum(MEMBERSHIP_VALUES),
-  programmeOfStudy: z.string().min(2).max(150),
-  level: z.enum(LEVEL_VALUES),
+  isStudent: z.boolean().default(true),
+  programmeOfStudy: z.string().min(2).max(150).optional(),
+  level: z.enum(LEVEL_VALUES).optional(),
   location: z.string().min(2).max(200),
   departmentInChurch: z.enum(DEPARTMENT_VALUES),
   emergencyContactName: z.string().min(2).max(100),
@@ -25,6 +26,14 @@ const RegisterSchema = z.object({
   emergencyContactRelationship: z.enum(RELATIONSHIP_VALUES),
   password: z.string().min(6).max(100),
   referredBy: z.string().optional(),
+}).superRefine((data, ctx) => {
+  if (!data.isStudent) return;
+  if (!data.programmeOfStudy || data.programmeOfStudy.trim().length < 2) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["programmeOfStudy"], message: "Programme of Study is required" });
+  }
+  if (!data.level) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["level"], message: "Level / Year is required" });
+  }
 });
 
 function normalizePhone(phone: string): string {
@@ -50,7 +59,7 @@ export async function POST(req: NextRequest) {
     }
 
     const {
-      name, phone, whatsapp, email, dateOfBirth, gender, membershipType,
+      name, phone, whatsapp, email, dateOfBirth, gender, membershipType, isStudent,
       programmeOfStudy, level, location, departmentInChurch,
       emergencyContactName, emergencyContactPhone, emergencyContactRelationship,
       password, referredBy,
@@ -84,8 +93,9 @@ export async function POST(req: NextRequest) {
       dateOfBirth,
       gender,
       membershipType,
-      programmeOfStudy,
-      level,
+      isStudent,
+      programmeOfStudy: isStudent ? programmeOfStudy : undefined,
+      level: isStudent ? level : undefined,
       location,
       departmentInChurch,
       emergencyContactName,

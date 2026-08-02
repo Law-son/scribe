@@ -27,6 +27,7 @@ export async function GET() {
     role: user.role,
     totalPoints: user.totalPoints,
     membershipType: user.membershipType,
+    isStudent: user.isStudent ?? true,
     programmeOfStudy: user.programmeOfStudy ?? "",
     level: user.level ?? "",
     location: user.location,
@@ -48,6 +49,7 @@ const UpdateSchema = z.object({
   dateOfBirth: z.coerce.date().optional(),
   gender: z.enum(GENDER_VALUES).optional(),
   membershipType: z.enum(MEMBERSHIP_VALUES).optional(),
+  isStudent: z.boolean().optional(),
   programmeOfStudy: z.string().min(2).max(150).optional(),
   level: z.enum(LEVEL_VALUES).optional(),
   location: z.string().min(2).max(200).optional(),
@@ -79,6 +81,14 @@ export async function PATCH(req: NextRequest) {
   await connectDB();
 
   const updates: Record<string, unknown> = { ...parsed.data };
+  const unset: Record<string, ""> = {};
+
+  if (parsed.data.isStudent === false) {
+    delete updates.programmeOfStudy;
+    delete updates.level;
+    unset.programmeOfStudy = "";
+    unset.level = "";
+  }
 
   if (parsed.data.phone) {
     const normalized = normalizePhone(parsed.data.phone);
@@ -116,7 +126,10 @@ export async function PATCH(req: NextRequest) {
     }
   }
 
-  const user = await User.findByIdAndUpdate(userId, { $set: updates }, { new: true }).select("-password").lean();
+  const updateOp: Record<string, unknown> = { $set: updates };
+  if (Object.keys(unset).length) updateOp.$unset = unset;
+
+  const user = await User.findByIdAndUpdate(userId, updateOp, { new: true }).select("-password").lean();
   if (!user) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   return NextResponse.json({
@@ -128,6 +141,7 @@ export async function PATCH(req: NextRequest) {
     dateOfBirth: user.dateOfBirth ? new Date(user.dateOfBirth).toISOString().slice(0, 10) : "",
     gender: user.gender,
     membershipType: user.membershipType,
+    isStudent: user.isStudent ?? true,
     programmeOfStudy: user.programmeOfStudy ?? "",
     level: user.level ?? "",
     location: user.location,

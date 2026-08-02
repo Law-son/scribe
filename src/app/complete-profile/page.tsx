@@ -77,6 +77,7 @@ export default function CompleteProfilePage() {
   const [referralResults, setReferralResults] = useState<UserSuggestion[]>([]);
   const [referralLoading, setReferralLoading] = useState(false);
   const [selectedReferrer, setSelectedReferrer] = useState<UserSuggestion | null>(null);
+  const [isStudent, setIsStudent] = useState(true);
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -88,6 +89,7 @@ export default function CompleteProfilePage() {
           return;
         }
         setRole(data.role ?? "member");
+        setIsStudent(data.isStudent ?? true);
         setForm({
           name: data.name ?? "",
           dateOfBirth: data.dateOfBirth ?? "",
@@ -129,7 +131,10 @@ export default function CompleteProfilePage() {
   }
 
   function validateStep(idx: number): string | null {
-    for (const field of STEPS[idx].fields) {
+    const fields = STEPS[idx].fields.filter(
+      (f) => isStudent || (f !== "programmeOfStudy" && f !== "level")
+    );
+    for (const field of fields) {
       const value = form[field].trim();
       if (!value) return "Please fill in all required fields before continuing";
       const min = MIN_LENGTHS[field];
@@ -167,10 +172,16 @@ export default function CompleteProfilePage() {
 
     setSaving(true);
     try {
+      const { programmeOfStudy, level, ...rest } = form;
       const res = await fetch("/api/auth/me", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, referredBy: selectedReferrer?.id }),
+        body: JSON.stringify({
+          ...rest,
+          ...(isStudent ? { programmeOfStudy, level } : {}),
+          isStudent,
+          referredBy: selectedReferrer?.id,
+        }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -248,8 +259,21 @@ export default function CompleteProfilePage() {
 
             {step === 1 && (
               <>
-                <Input label="Programme of Study" placeholder="e.g. BSc Computer Science" value={form.programmeOfStudy} onChange={(e) => set("programmeOfStudy", e.target.value)} required />
-                <Select label="Level / Year" value={form.level} onChange={(e) => set("level", e.target.value)} options={LEVEL_OPTIONS} />
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={!isStudent}
+                    onChange={(e) => setIsStudent(!e.target.checked)}
+                    className="w-4 h-4 rounded accent-forest"
+                  />
+                  <span className="text-sm font-body text-navy">I&apos;m not a student</span>
+                </label>
+                {isStudent && (
+                  <>
+                    <Input label="Programme of Study" placeholder="e.g. BSc Computer Science" value={form.programmeOfStudy} onChange={(e) => set("programmeOfStudy", e.target.value)} required />
+                    <Select label="Level / Year" value={form.level} onChange={(e) => set("level", e.target.value)} options={LEVEL_OPTIONS} />
+                  </>
+                )}
                 <Input label="Location/Name of Hostel" value={form.location} onChange={(e) => set("location", e.target.value)} required />
                 <Select label="I am a…" value={form.membershipType} onChange={(e) => set("membershipType", e.target.value)} options={MEMBERSHIP_OPTIONS} />
                 <Select label="Department in the Church" value={form.departmentInChurch} onChange={(e) => set("departmentInChurch", e.target.value)} options={DEPARTMENT_OPTIONS} />

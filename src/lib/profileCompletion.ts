@@ -12,10 +12,16 @@ const REQUIRED_FOR_COMPLETION = [
   "emergencyContactRelationship",
 ] as const;
 
-type CompletionCheckable = Partial<Record<(typeof REQUIRED_FOR_COMPLETION)[number], unknown>>;
+// Skipped when the user has explicitly flagged themselves as not a student.
+const STUDENT_ONLY_FIELDS = new Set(["programmeOfStudy", "level"]);
+
+type CompletionCheckable = Partial<Record<(typeof REQUIRED_FOR_COMPLETION)[number], unknown>> & {
+  isStudent?: boolean;
+};
 
 export function isProfileComplete(user: CompletionCheckable): boolean {
   return REQUIRED_FOR_COMPLETION.every((field) => {
+    if (user.isStudent === false && STUDENT_ONLY_FIELDS.has(field)) return true;
     const value = user[field];
     if (value === undefined || value === null) return false;
     if (typeof value === "string") return value.trim() !== "";

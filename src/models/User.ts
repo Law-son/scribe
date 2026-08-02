@@ -9,6 +9,7 @@ export interface IUser extends Document {
   dateOfBirth?: Date;
   gender: string;
   membershipType: string;
+  isStudent: boolean;
   programmeOfStudy?: string;
   level?: string;
   location: string;
@@ -41,6 +42,7 @@ const UserSchema = new Schema<IUser>(
       enum: ["member", "visitor", "invitee", "convert"],
       default: "member",
     },
+    isStudent: { type: Boolean, default: true },
     programmeOfStudy: { type: String, trim: true },
     level: {
       type: String,

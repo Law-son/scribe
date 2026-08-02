@@ -39,6 +39,7 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [isStudent, setIsStudent] = useState(true);
   const [form, setForm] = useState(emptyForm);
 
   useEffect(() => {
@@ -46,6 +47,7 @@ export default function ProfilePage() {
       .then((r) => r.json())
       .then((data) => {
         setProfile(data);
+        setIsStudent(data.isStudent ?? true);
         setForm({
           name: data.name,
           phone: data.phone,
@@ -74,9 +76,10 @@ export default function ProfilePage() {
     e.preventDefault();
     setSaving(true);
     try {
-      const payload = Object.fromEntries(
-        Object.entries(form).filter(([, value]) => value.trim() !== "")
-      );
+      const payload = {
+        ...Object.fromEntries(Object.entries(form).filter(([, value]) => value.trim() !== "")),
+        isStudent,
+      };
       const res = await fetch("/api/auth/me", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -149,11 +152,22 @@ export default function ProfilePage() {
         <div className="bg-white rounded-2xl border border-cream-dark shadow-sm p-6">
           <h2 className="font-heading text-lg text-navy font-semibold mb-6">Academic & Church Info</h2>
           <div className="space-y-4">
-            <Input label="Programme of Study" value={form.programmeOfStudy} onChange={(e) => set("programmeOfStudy", e.target.value)} />
-            <div className="grid grid-cols-2 gap-4">
-              <Select label="Level / Year" value={form.level} onChange={(e) => set("level", e.target.value)} options={LEVEL_OPTIONS} />
-              <Select label="Membership Type" value={form.membershipType} onChange={(e) => set("membershipType", e.target.value)} options={MEMBERSHIP_OPTIONS} />
-            </div>
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={!isStudent}
+                onChange={(e) => setIsStudent(!e.target.checked)}
+                className="w-4 h-4 rounded accent-forest"
+              />
+              <span className="text-sm font-body text-navy">I&apos;m not a student</span>
+            </label>
+            {isStudent && (
+              <>
+                <Input label="Programme of Study" value={form.programmeOfStudy} onChange={(e) => set("programmeOfStudy", e.target.value)} />
+                <Select label="Level / Year" value={form.level} onChange={(e) => set("level", e.target.value)} options={LEVEL_OPTIONS} />
+              </>
+            )}
+            <Select label="Membership Type" value={form.membershipType} onChange={(e) => set("membershipType", e.target.value)} options={MEMBERSHIP_OPTIONS} />
             <Input label="Location/Name of Hostel" value={form.location} onChange={(e) => set("location", e.target.value)} required />
             <Select label="Department in the Church" value={form.departmentInChurch} onChange={(e) => set("departmentInChurch", e.target.value)} options={DEPARTMENT_OPTIONS} />
           </div>

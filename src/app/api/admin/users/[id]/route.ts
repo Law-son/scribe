@@ -15,6 +15,7 @@ const UpdateSchema = z.object({
   whatsapp: z.string().min(7).max(20).optional(),
   email: z.string().email().optional(),
   dateOfBirth: z.coerce.date().optional(),
+  isStudent: z.boolean().optional(),
   programmeOfStudy: z.string().min(2).max(150).optional(),
   level: z.enum(LEVEL_VALUES).optional(),
   location: z.string().optional(),
@@ -59,11 +60,21 @@ export async function PATCH(
   const { id } = await params;
   const body = await req.json();
   const parsed = UpdateSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: "Invalid input" }, { status: 400 });
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Invalid input", details: parsed.error.flatten() }, { status: 400 });
+  }
 
   await connectDB();
 
   const updates: Record<string, unknown> = { ...parsed.data };
+  const unset: Record<string, ""> = {};
+
+  if (parsed.data.isStudent === false) {
+    delete updates.programmeOfStudy;
+    delete updates.level;
+    unset.programmeOfStudy = "";
+    unset.level = "";
+  }
 
   if (parsed.data.phone) {
     const normalized = normalizePhone(parsed.data.phone);
@@ -80,8 +91,11 @@ export async function PATCH(
     updates.email = normalizedEmail;
   }
 
+  const updateOp: Record<string, unknown> = { $set: updates };
+  if (Object.keys(unset).length) updateOp.$unset = unset;
+
   const before = await User.findById(id).select("name role isActive").lean();
-  const user = await User.findByIdAndUpdate(id, updates, { new: true }).select("-password");
+  const user = await User.findByIdAndUpdate(id, updateOp, { new: true }).select("-password");
   if (!user) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const changes = parsed.data;

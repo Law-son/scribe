@@ -67,6 +67,7 @@ export default function RegisterPage() {
   const [referralResults, setReferralResults] = useState<UserSuggestion[]>([]);
   const [referralLoading, setReferralLoading] = useState(false);
   const [selectedReferrer, setSelectedReferrer] = useState<UserSuggestion | null>(null);
+  const [isStudent, setIsStudent] = useState(true);
   const [form, setForm] = useState<FormState>(initialForm);
 
   const searchReferrals = useCallback(async (q: string) => {
@@ -87,7 +88,10 @@ export default function RegisterPage() {
   }
 
   function validateStep(idx: number): string | null {
-    for (const field of STEPS[idx].fields) {
+    const fields = STEPS[idx].fields.filter(
+      (f) => isStudent || (f !== "programmeOfStudy" && f !== "level")
+    );
+    for (const field of fields) {
       if (!form[field].trim()) return "Please fill in all required fields before continuing";
     }
     if (idx === 0 && !EMAIL_RE.test(form.email)) return "Please enter a valid email address";
@@ -128,10 +132,10 @@ export default function RegisterPage() {
           phone: form.phone,
           whatsapp: form.whatsapp,
           email: form.email,
-          programmeOfStudy: form.programmeOfStudy,
-          level: form.level,
+          ...(isStudent ? { programmeOfStudy: form.programmeOfStudy, level: form.level } : {}),
           location: form.location,
           membershipType: form.membershipType,
+          isStudent,
           departmentInChurch: form.departmentInChurch,
           emergencyContactName: form.emergencyContactName,
           emergencyContactPhone: form.emergencyContactPhone,
@@ -212,8 +216,21 @@ export default function RegisterPage() {
 
             {step === 1 && (
               <>
-                <Input label="Programme of Study" placeholder="e.g. BSc Computer Science" value={form.programmeOfStudy} onChange={(e) => set("programmeOfStudy", e.target.value)} required />
-                <Select label="Level / Year" value={form.level} onChange={(e) => set("level", e.target.value)} options={LEVEL_OPTIONS} />
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={!isStudent}
+                    onChange={(e) => setIsStudent(!e.target.checked)}
+                    className="w-4 h-4 rounded accent-forest"
+                  />
+                  <span className="text-sm font-body text-navy">I&apos;m not a student</span>
+                </label>
+                {isStudent && (
+                  <>
+                    <Input label="Programme of Study" placeholder="e.g. BSc Computer Science" value={form.programmeOfStudy} onChange={(e) => set("programmeOfStudy", e.target.value)} required />
+                    <Select label="Level / Year" value={form.level} onChange={(e) => set("level", e.target.value)} options={LEVEL_OPTIONS} />
+                  </>
+                )}
                 <Input label="Location/Name of Hostel" placeholder="Accra, Ghana" value={form.location} onChange={(e) => set("location", e.target.value)} required />
                 <Select
                   label="I am a…"

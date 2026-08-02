@@ -6,7 +6,7 @@ import User from "@/models/User";
 import { isProfileComplete } from "@/lib/profileCompletion";
 
 const COMPLETION_FIELDS =
-  "dateOfBirth whatsapp email programmeOfStudy level departmentInChurch emergencyContactName emergencyContactPhone emergencyContactRelationship";
+  "dateOfBirth whatsapp email isStudent programmeOfStudy level departmentInChurch emergencyContactName emergencyContactPhone emergencyContactRelationship";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const headersList = await headers();
