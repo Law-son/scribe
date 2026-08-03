@@ -14,6 +14,7 @@ import {
   Megaphone,
   Users,
   Sprout,
+  MapPin,
   BarChart3,
   Settings,
   Activity,
@@ -46,6 +47,7 @@ const sections = [
     links: [
       { href: "/admin/users", label: "Members", icon: Users },
       { href: "/admin/evangelism", label: "Evangelism", icon: Sprout },
+      { href: "/admin/attendance", label: "Attendance", icon: MapPin },
     ],
   },
   {

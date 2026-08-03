@@ -8,7 +8,8 @@ export type PointAction =
   | "read_bible_study"
   | "read_devotional"
   | "read_quote"
-  | "register_convert";
+  | "register_convert"
+  | "mark_attendance";
 
 export interface TokenPayload {
   sub: string;

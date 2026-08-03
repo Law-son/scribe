@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 
 const links = [
   { href: "/dashboard", label: "Home", icon: "⛪" },
+  { href: "/attendance", label: "Attendance", icon: "📍" },
   { href: "/sermons", label: "Sermons", icon: "📖" },
   { href: "/bible-study", label: "Bible Study", icon: "✝️" },
   { href: "/devotionals", label: "Devotionals", icon: "🕊️" },

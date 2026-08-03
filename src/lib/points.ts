@@ -10,6 +10,7 @@ const POINT_VALUES: Record<PointAction, number> = {
   read_devotional: 5,
   read_quote: 1,
   register_convert: 15,
+  mark_attendance: 5,
 };
 
 interface AwardOptions {

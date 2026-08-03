@@ -22,6 +22,7 @@ const PointTransactionSchema = new Schema<IPointTransaction>(
         "read_devotional",
         "read_quote",
         "register_convert",
+        "mark_attendance",
       ],
       required: true,
     },
