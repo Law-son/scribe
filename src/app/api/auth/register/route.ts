@@ -7,6 +7,7 @@ import { signToken, setAuthCookie } from "@/lib/auth";
 import { sendSMS } from "@/lib/sms";
 import { awardPoints } from "@/lib/points";
 import { GENDER_VALUES, MEMBERSHIP_VALUES, LEVEL_VALUES, DEPARTMENT_VALUES, RELATIONSHIP_VALUES } from "@/lib/userOptions";
+import { normalizePhone } from "@/lib/phone";
 
 const RegisterSchema = z.object({
   name: z.string().min(2).max(100),
@@ -35,17 +36,6 @@ const RegisterSchema = z.object({
     ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["level"], message: "Level / Year is required" });
   }
 });
-
-function normalizePhone(phone: string): string {
-  const digits = phone.replace(/\D/g, "");
-  if (digits.startsWith("233") && digits.length === 12) {
-    return "0" + digits.slice(3);
-  }
-  if (digits.startsWith("0") && digits.length === 10) {
-    return digits;
-  }
-  return phone;
-}
 
 export async function POST(req: NextRequest) {
   try {

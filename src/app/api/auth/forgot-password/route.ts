@@ -5,14 +5,9 @@ import connectDB from "@/lib/db";
 import User from "@/models/User";
 import PasswordReset from "@/models/PasswordReset";
 import { sendSMS } from "@/lib/sms";
+import { normalizePhone } from "@/lib/phone";
 
 const Schema = z.object({ phone: z.string().min(9) });
-
-function normalizePhone(phone: string) {
-  const digits = phone.replace(/\D/g, "");
-  if (digits.startsWith("0") && digits.length === 10) return "0" + digits.slice(1);
-  return digits;
-}
 
 export async function POST(req: NextRequest) {
   const body = await req.json();

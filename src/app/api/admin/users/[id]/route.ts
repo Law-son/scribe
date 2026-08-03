@@ -5,6 +5,7 @@ import User from "@/models/User";
 import { getCurrentUser } from "@/lib/auth";
 import { logActivity } from "@/lib/logActivity";
 import { GENDER_VALUES, MEMBERSHIP_VALUES, LEVEL_VALUES, DEPARTMENT_VALUES, RELATIONSHIP_VALUES } from "@/lib/userOptions";
+import { normalizePhone } from "@/lib/phone";
 
 const UpdateSchema = z.object({
   name: z.string().min(2).optional(),
@@ -25,13 +26,6 @@ const UpdateSchema = z.object({
   emergencyContactPhone: z.string().min(7).max(20).optional(),
   emergencyContactRelationship: z.enum(RELATIONSHIP_VALUES).optional(),
 });
-
-function normalizePhone(phone: string): string {
-  const digits = phone.replace(/\D/g, "");
-  if (digits.startsWith("233") && digits.length === 12) return "0" + digits.slice(3);
-  if (digits.startsWith("0") && digits.length === 10) return digits;
-  return phone;
-}
 
 async function guard() {
   const user = await getCurrentUser();

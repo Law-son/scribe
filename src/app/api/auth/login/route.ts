@@ -5,22 +5,12 @@ import connectDB from "@/lib/db";
 import User from "@/models/User";
 import { signToken, setAuthCookie } from "@/lib/auth";
 import { isProfileComplete } from "@/lib/profileCompletion";
+import { normalizePhone } from "@/lib/phone";
 
 const LoginSchema = z.object({
   phone: z.string().min(7),
   password: z.string().min(1),
 });
-
-function normalizePhone(phone: string): string {
-  const digits = phone.replace(/\D/g, "");
-  if (digits.startsWith("233") && digits.length === 12) {
-    return "0" + digits.slice(3);
-  }
-  if (digits.startsWith("0") && digits.length === 10) {
-    return digits;
-  }
-  return phone;
-}
 
 export async function POST(req: NextRequest) {
   try {

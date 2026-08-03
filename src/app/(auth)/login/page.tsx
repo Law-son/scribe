@@ -86,7 +86,10 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <div className="mt-4 text-right">
+          <div className="mt-4 flex items-center justify-between">
+            <Link href="/set-password" className="text-xs text-navy/50 font-body hover:text-gold-dark transition-colors">
+              Set your password
+            </Link>
             <Link href="/forgot-password" className="text-xs text-navy/50 font-body hover:text-gold-dark transition-colors">
               Forgot password?
             </Link>

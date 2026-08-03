@@ -5,6 +5,7 @@ import connectDB from "@/lib/db";
 import User from "@/models/User";
 import { getCurrentUser } from "@/lib/auth";
 import { GENDER_VALUES, MEMBERSHIP_VALUES, LEVEL_VALUES, DEPARTMENT_VALUES, RELATIONSHIP_VALUES } from "@/lib/userOptions";
+import { normalizePhone } from "@/lib/phone";
 
 export async function GET() {
   const currentUser = await getCurrentUser();
@@ -59,13 +60,6 @@ const UpdateSchema = z.object({
   emergencyContactRelationship: z.enum(RELATIONSHIP_VALUES).optional(),
   referredBy: z.string().optional(),
 });
-
-function normalizePhone(phone: string): string {
-  const digits = phone.replace(/\D/g, "");
-  if (digits.startsWith("233") && digits.length === 12) return "0" + digits.slice(3);
-  if (digits.startsWith("0") && digits.length === 10) return digits;
-  return phone;
-}
 
 export async function PATCH(req: NextRequest) {
   const currentUser = await getCurrentUser();

@@ -1,6 +1,8 @@
+import Link from "next/link";
 import connectDB from "@/lib/db";
 import User from "@/models/User";
 import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
 import { UserActions } from "@/components/admin/UserActions";
 import { UsersSearch } from "./UsersSearch";
 import { format } from "date-fns";
@@ -27,6 +29,9 @@ export default async function AdminUsersPage({
           <h1 className="font-heading text-3xl text-navy font-bold">Members</h1>
           <p className="text-navy/60 font-body mt-1">{users.length} shown</p>
         </div>
+        <Link href="/admin/users/import">
+          <Button type="button" variant="secondary">Bulk Import</Button>
+        </Link>
       </div>
 
       <UsersSearch initialValue={search} />
