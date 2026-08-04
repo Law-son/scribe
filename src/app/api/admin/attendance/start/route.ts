@@ -2,8 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import connectDB from "@/lib/db";
 import AttendanceSession from "@/models/AttendanceSession";
+import AttendanceRecord from "@/models/AttendanceRecord";
+import User from "@/models/User";
 import { getCurrentUser } from "@/lib/auth";
-import { getActiveSession, serializeSession, DEFAULT_RADIUS_METERS } from "@/lib/attendance";
+import { getActiveSession, serializeSession, dayString, DEFAULT_RADIUS_METERS } from "@/lib/attendance";
+import { awardPoints } from "@/lib/points";
 import { logActivity } from "@/lib/logActivity";
 
 const Schema = z.object({
@@ -44,6 +47,32 @@ export async function POST(req: NextRequest) {
       label: parsed.data.label,
     });
 
+    // Auto-check-in the admin who started it — they shouldn't have to
+    // separately tap "Take Attendance" for a session they just opened. Their
+    // own coordinates are the geofence center, so distance is 0 by
+    // definition; non-fatal if this fails, since the session already started.
+    let selfCheckedIn = false;
+    try {
+      const admin = await User.findById(actor.sub).select("name phone").lean();
+      if (admin) {
+        await AttendanceRecord.create({
+          sessionId: session._id,
+          userId: actor.sub,
+          userName: admin.name,
+          userPhone: admin.phone,
+          latitude: session.latitude,
+          longitude: session.longitude,
+          accuracyMeters: 0,
+          distanceMeters: 0,
+          day: dayString(),
+        });
+        await awardPoints({ userId: actor.sub, action: "mark_attendance", contentId: session._id.toString() }).catch(() => false);
+        selfCheckedIn = true;
+      }
+    } catch {
+      // Non-fatal — the session itself still started successfully.
+    }
+
     logActivity({
       actorId: actor.sub,
       actorName: actor.name,
@@ -52,7 +81,7 @@ export async function POST(req: NextRequest) {
       targetId: session._id.toString(),
     });
 
-    return NextResponse.json({ session: serializeSession(session), alreadyActive: false });
+    return NextResponse.json({ session: serializeSession(session), alreadyActive: false, selfCheckedIn });
   } catch (err: unknown) {
     if (
       typeof err === "object" &&

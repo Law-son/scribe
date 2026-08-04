@@ -25,6 +25,10 @@ export function AttendanceControl({ initialSession, initialCount }: Props) {
   const [radius, setRadius] = useState(String(DEFAULT_RADIUS));
   const [label, setLabel] = useState("");
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Plain ref, not state — lets poll() detect "the session just disappeared"
+  // without nesting side effects (toast/router.refresh) inside a setState
+  // updater, which React disallows while another component is rendering.
+  const hadSessionRef = useRef(initialSession !== null);
 
   const hasSession = session !== null;
 
@@ -34,13 +38,12 @@ export function AttendanceControl({ initialSession, initialCount }: Props) {
       if (!res.ok) return;
       const data: { session: SerializedSession | null; count: number } = await res.json();
       setCount(data.count);
-      setSession((prev) => {
-        if (!data.session && prev) {
-          toast(prev.autoClosed ? "Attendance session auto-closed." : "Attendance session ended.");
-          router.refresh();
-        }
-        return data.session;
-      });
+      setSession(data.session);
+      if (!data.session && hadSessionRef.current) {
+        toast("Attendance session is no longer active.");
+        router.refresh();
+      }
+      hadSessionRef.current = data.session !== null;
     } catch {
       // network glitch — keep polling
     }
@@ -80,8 +83,15 @@ export function AttendanceControl({ initialSession, initialCount }: Props) {
             return;
           }
           setSession(data.session);
-          setCount(0);
-          toast.success(data.alreadyActive ? "An attendance session is already active." : "Attendance started!");
+          setCount(data.selfCheckedIn ? 1 : 0);
+          hadSessionRef.current = data.session !== null;
+          if (data.alreadyActive) {
+            toast.success("An attendance session is already active.");
+          } else if (data.selfCheckedIn) {
+            toast.success("Attendance started! You've been marked present. +5 points 📍");
+          } else {
+            toast.success("Attendance started!");
+          }
           router.refresh();
         } catch {
           toast.error("Network error. Please try again.");
@@ -107,6 +117,7 @@ export function AttendanceControl({ initialSession, initialCount }: Props) {
         return;
       }
       setSession(null);
+      hadSessionRef.current = false;
       toast.success("Attendance ended.");
       router.refresh();
     } catch {

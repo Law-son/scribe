@@ -21,7 +21,7 @@ export function haversineDistance(
 }
 
 // Above this, a GPS reading is too unreliable to trust for a geofence decision.
-const MAX_ACCEPTABLE_ACCURACY_METERS = 1000;
+export const MAX_ACCEPTABLE_ACCURACY_METERS = 1000;
 
 /**
  * Whether a check-in should be accepted given the reported distance from the
