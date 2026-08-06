@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
 
   if (!isWithinGeofence(distanceMeters, parsed.data.accuracy, session.radiusMeters)) {
     return NextResponse.json(
-      { error: "You're too far from the church to check in. Move closer and try again." },
+      { error: "Bro... you're not at church yet. 😭 Pull up, then check in." },
       { status: 400 }
     );
   }

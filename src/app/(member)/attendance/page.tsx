@@ -227,7 +227,7 @@ export default function AttendancePage() {
         return;
       }
       toast.success(
-        `Attendance marked! +${data.pointsAwarded} points ✅${stale ? " (using your last known location)" : ""}`
+        `+${data.pointsAwarded} for showing up. God sees your faithfulness. ❤️🙌${stale ? " (using your last known location)" : ""}`
       );
       router.refresh();
       loadData();
