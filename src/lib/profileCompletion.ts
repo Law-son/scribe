@@ -1,6 +1,7 @@
 // Fields introduced after the original registration form shipped.
 // Accounts created before then won't have these until they complete their profile.
 const REQUIRED_FOR_COMPLETION = [
+  "gender",
   "dateOfBirth",
   "whatsapp",
   "email",

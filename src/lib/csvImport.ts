@@ -35,11 +35,11 @@ export interface CsvFieldInfo {
 export const CSV_FIELD_INFO: CsvFieldInfo[] = [
   { header: CSV_HEADERS.fullName, required: true, hint: "Or use First Name / Last Name / Other Names instead" },
   { header: CSV_HEADERS.phone, required: true, hint: "e.g. 0244000000 — used to identify members and skip duplicates" },
-  { header: CSV_HEADERS.gender, required: true, hint: "Male / Female / Other" },
+  { header: CSV_HEADERS.gender, required: false, hint: "Male / Female / Other — will be asked for at login if left blank" },
   { header: CSV_HEADERS.location, required: true },
   { header: CSV_HEADERS.whatsapp, required: false },
   { header: CSV_HEADERS.email, required: false },
-  { header: CSV_HEADERS.dateOfBirth, required: false, hint: "YYYY-MM-DD" },
+  { header: CSV_HEADERS.dateOfBirth, required: false, hint: "YYYY-MM-DD or MM/DD/YYYY" },
   { header: CSV_HEADERS.membershipType, required: false, hint: "Member / Visitor / Invitee / New Convert (default: Member)" },
   { header: CSV_HEADERS.isStudent, required: false, hint: "Yes / No (default: Yes)" },
   { header: CSV_HEADERS.programmeOfStudy, required: false },
@@ -55,7 +55,7 @@ export const CSV_MAX_ROWS = 1000;
 export interface NormalizedRow {
   name: string;
   phone: string;
-  gender: string;
+  gender?: string;
   location: string;
   isStudent: boolean;
   whatsapp?: string;
@@ -118,11 +118,27 @@ function parseEmail(raw?: string): string | undefined {
   return EMAIL_RE.test(trimmed) ? trimmed.toLowerCase() : undefined;
 }
 
+function dateFromParts(year: number, month: number, day: number): Date | undefined {
+  if (month < 1 || month > 12 || day < 1 || day > 31) return undefined;
+  const d = new Date(Date.UTC(year, month - 1, day));
+  return Number.isNaN(d.getTime()) ? undefined : d;
+}
+
+// Explicitly parses the documented "YYYY-MM-DD" format plus the common
+// spreadsheet-export "MM/DD/YYYY" format. Deliberately avoids `new Date(string)`,
+// whose native parser guesses at ambiguous slash-separated dates (e.g. silently
+// swapping day/month for "05/03/2005") instead of failing loudly.
 function parseDate(raw?: string): Date | undefined {
   const trimmed = raw?.trim();
   if (!trimmed) return undefined;
-  const d = new Date(trimmed);
-  return Number.isNaN(d.getTime()) ? undefined : d;
+
+  let m = trimmed.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/);
+  if (m) return dateFromParts(Number(m[1]), Number(m[2]), Number(m[3]));
+
+  m = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (m) return dateFromParts(Number(m[3]), Number(m[1]), Number(m[2]));
+
+  return undefined;
 }
 
 function resolveName(row: Record<string, string>): string | null {
@@ -138,7 +154,7 @@ function resolveName(row: Record<string, string>): string | null {
 /**
  * Validates and normalizes one raw CSV row (header -> cell value, as produced by
  * client-side parsing) into a User-creatable shape. Hard-required fields (name,
- * phone, gender, location) fail the row if missing or unrecognized; everything
+ * phone, location) fail the row if missing or unrecognized; everything
  * else is best-effort — an invalid/unrecognized optional value is simply left
  * out rather than failing the row.
  */
@@ -160,14 +176,7 @@ export function parseRow(rawRow: Record<string, string>, rowNumber: number): Csv
     return { ok: false, reason: `Row ${rowNumber}: invalid phone number '${rawPhone}'` };
   }
 
-  const rawGender = get(CSV_HEADERS.gender);
-  const gender = parseGender(rawGender);
-  if (!gender) {
-    return {
-      ok: false,
-      reason: `Row ${rowNumber}: missing or unrecognized 'Gender' value${rawGender?.trim() ? ` ('${rawGender.trim()}')` : ""}`,
-    };
-  }
+  const gender = parseGender(get(CSV_HEADERS.gender));
 
   const rawLocation = get(CSV_HEADERS.location)?.trim();
   if (!rawLocation) {
@@ -176,10 +185,14 @@ export function parseRow(rawRow: Record<string, string>, rowNumber: number): Csv
 
   const isStudent = parseIsStudent(get(CSV_HEADERS.isStudent));
 
-  const data: NormalizedRow = { name, phone, gender, location: rawLocation, isStudent };
+  const data: NormalizedRow = { name, phone, location: rawLocation, isStudent };
+  if (gender) data.gender = gender;
 
   const whatsapp = get(CSV_HEADERS.whatsapp)?.trim();
-  if (whatsapp) data.whatsapp = normalizePhone(whatsapp);
+  if (whatsapp) {
+    const normalizedWhatsapp = normalizePhone(whatsapp);
+    if (/^0\d{9}$/.test(normalizedWhatsapp)) data.whatsapp = normalizedWhatsapp;
+  }
 
   const email = parseEmail(get(CSV_HEADERS.email));
   if (email) data.email = email;
@@ -204,7 +217,10 @@ export function parseRow(rawRow: Record<string, string>, rowNumber: number): Csv
   if (emergencyContactName) data.emergencyContactName = emergencyContactName;
 
   const emergencyContactPhoneRaw = get(CSV_HEADERS.emergencyContactPhone)?.trim();
-  if (emergencyContactPhoneRaw) data.emergencyContactPhone = normalizePhone(emergencyContactPhoneRaw);
+  if (emergencyContactPhoneRaw) {
+    const normalizedEmergencyPhone = normalizePhone(emergencyContactPhoneRaw);
+    if (/^0\d{9}$/.test(normalizedEmergencyPhone)) data.emergencyContactPhone = normalizedEmergencyPhone;
+  }
 
   const emergencyContactRelationship = matchOption(RELATIONSHIP_OPTIONS, get(CSV_HEADERS.emergencyContactRelationship));
   if (emergencyContactRelationship) data.emergencyContactRelationship = emergencyContactRelationship;

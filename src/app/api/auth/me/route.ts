@@ -37,7 +37,7 @@ export async function GET() {
     emergencyContactPhone: user.emergencyContactPhone ?? "",
     emergencyContactRelationship: user.emergencyContactRelationship ?? "",
     referredBy: user.referredBy ? { id: String(user.referredBy._id), name: user.referredBy.name } : null,
-    gender: user.gender,
+    gender: user.gender ?? "",
     isActive: user.isActive,
   });
 }
@@ -133,7 +133,7 @@ export async function PATCH(req: NextRequest) {
     whatsapp: user.whatsapp ?? "",
     email: user.email ?? "",
     dateOfBirth: user.dateOfBirth ? new Date(user.dateOfBirth).toISOString().slice(0, 10) : "",
-    gender: user.gender,
+    gender: user.gender ?? "",
     membershipType: user.membershipType,
     isStudent: user.isStudent ?? true,
     programmeOfStudy: user.programmeOfStudy ?? "",

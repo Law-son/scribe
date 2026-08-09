@@ -7,7 +7,7 @@ export interface IUser extends Document {
   password: string;
   name: string;
   dateOfBirth?: Date;
-  gender: string;
+  gender?: string;
   membershipType: string;
   isStudent: boolean;
   programmeOfStudy?: string;
@@ -35,7 +35,7 @@ const UserSchema = new Schema<IUser>(
     password: { type: String, required: true, select: false },
     name: { type: String, required: true, trim: true },
     dateOfBirth: { type: Date },
-    gender: { type: String, required: true, enum: ["male", "female", "other"] },
+    gender: { type: String, enum: ["male", "female", "other"] },
     membershipType: {
       type: String,
       required: true,
