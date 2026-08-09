@@ -7,7 +7,7 @@ import { isProfileComplete } from "@/lib/profileCompletion";
 import DailyLoginTrigger from "./DailyLoginTrigger";
 
 const COMPLETION_FIELDS =
-  "totalPoints name dateOfBirth whatsapp email isStudent programmeOfStudy level departmentInChurch emergencyContactName emergencyContactPhone emergencyContactRelationship";
+  "totalPoints name gender dateOfBirth whatsapp email isStudent programmeOfStudy level departmentInChurch emergencyContactName emergencyContactPhone emergencyContactRelationship";
 
 export default async function MemberLayout({ children }: { children: React.ReactNode }) {
   const headersList = await headers();
