@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Mic, Square, MonitorPlay, ChevronLeft, ChevronRight } from "lucide-react";
+import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { Mic, Square, MonitorPlay, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import {
+  BIBLE_BOOKS,
   TRANSLATIONS,
   DEFAULT_TRANSLATION,
   parseSpokenReference,
@@ -44,6 +45,104 @@ async function fetchChapter(translation: string, book: BibleBook, chapter: numbe
   return verses.map((v) => ({ ...v, text: stripVerseHtml(v.text) }));
 }
 
+interface BookComboboxProps {
+  value: BibleBook | null;
+  onChange: (book: BibleBook) => void;
+}
+
+// Searchable book select — type to filter, click or arrow keys + Enter to pick.
+function BookCombobox({ value, onChange }: BookComboboxProps) {
+  const [query, setQuery] = useState(value?.name ?? "");
+  const [open, setOpen] = useState(false);
+  const [highlight, setHighlight] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setQuery(value?.name ?? "");
+  }, [value]);
+
+  useEffect(() => {
+    if (!open) return;
+    function handler(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  const filtered = query.trim()
+    ? BIBLE_BOOKS.filter((b) => b.name.toLowerCase().includes(query.trim().toLowerCase()))
+    : BIBLE_BOOKS;
+
+  function select(book: BibleBook) {
+    onChange(book);
+    setQuery(book.name);
+    setOpen(false);
+  }
+
+  function handleKeyDown(e: KeyboardEvent<HTMLInputElement>) {
+    if (!open) {
+      if (e.key === "ArrowDown" || e.key === "Enter") setOpen(true);
+      return;
+    }
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setHighlight((h) => Math.min(h + 1, filtered.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setHighlight((h) => Math.max(h - 1, 0));
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (filtered[highlight]) select(filtered[highlight]);
+    } else if (e.key === "Escape") {
+      setOpen(false);
+    }
+  }
+
+  return (
+    <div className="relative" ref={containerRef}>
+      <div className="relative">
+        <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-navy/30 pointer-events-none" />
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setOpen(true);
+            setHighlight(0);
+          }}
+          onFocus={() => setOpen(true)}
+          onKeyDown={handleKeyDown}
+          placeholder="Search book…"
+          className="w-full rounded-lg border border-cream-dark bg-cream-light text-navy text-sm font-body pl-8 pr-3 py-1.5 focus:outline-none focus:border-navy/40"
+        />
+      </div>
+      {open && (
+        <ul className="absolute z-20 left-0 right-0 top-full mt-1 max-h-48 overflow-y-auto bg-white border border-cream-dark rounded-lg shadow-lg">
+          {filtered.length === 0 ? (
+            <li className="px-3 py-2 text-xs text-navy/40 font-body italic">No books match</li>
+          ) : (
+            filtered.map((b, i) => (
+              <li key={b.id}>
+                <button
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => select(b)}
+                  className={`w-full text-left px-3 py-1.5 text-sm font-body transition-colors ${
+                    i === highlight ? "bg-cream text-navy" : "text-navy/70 hover:bg-cream"
+                  }`}
+                >
+                  {b.name}
+                </button>
+              </li>
+            ))
+          )}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 export function VoiceVerseLookup() {
   const [status, setStatus] = useState<Status>("idle");
   const [transcript, setTranscript] = useState("");
@@ -51,6 +150,11 @@ export function VoiceVerseLookup() {
   const [position, setPosition] = useState<Position | null>(null);
   const [navigating, setNavigating] = useState(false);
   const [textSize, setTextSize] = useState<TextSizeId>(DEFAULT_TEXT_SIZE);
+
+  const [manualOpen, setManualOpen] = useState(false);
+  const [manualBook, setManualBook] = useState<BibleBook | null>(null);
+  const [manualChapterStr, setManualChapterStr] = useState("");
+  const [manualVerseStr, setManualVerseStr] = useState("");
 
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const translationRef = useRef(translation);
@@ -85,31 +189,49 @@ export function VoiceVerseLookup() {
     window.open("/admin/voice-bible/display", "ucm-voice-bible-display", "noopener,width=1280,height=720");
   }, []);
 
-  const lookup = useCallback(async (heard: string) => {
-    const parsed = parseSpokenReference(heard);
-    if (!parsed) {
-      setStatus("not-found");
-      setPosition(null);
-      return;
-    }
-
+  const applyPosition = useCallback(async (book: BibleBook, chapter: number, verseNumber: number) => {
     setStatus("looking-up");
 
     try {
-      const verses = await fetchChapter(translationRef.current, parsed.book, parsed.chapter);
-      const index = verses.findIndex((v) => v.verse === parsed.verse);
+      const verses = await fetchChapter(translationRef.current, book, chapter);
+      const index = verses.findIndex((v) => v.verse === verseNumber);
       if (index === -1) {
         setPosition(null);
         setStatus("not-found");
         return;
       }
-      setPosition({ book: parsed.book, chapter: parsed.chapter, verses, index });
+      setPosition({ book, chapter, verses, index });
       setStatus("found");
     } catch {
       setPosition(null);
       setStatus("error");
     }
   }, []);
+
+  const lookup = useCallback(
+    async (heard: string) => {
+      const parsed = parseSpokenReference(heard);
+      if (!parsed) {
+        setStatus("not-found");
+        setPosition(null);
+        return;
+      }
+      await applyPosition(parsed.book, parsed.chapter, parsed.verse);
+    },
+    [applyPosition]
+  );
+
+  const manualChapter = parseInt(manualChapterStr) || 0;
+  const manualVerse = parseInt(manualVerseStr) || 0;
+  const canSubmitManual =
+    !!manualBook && manualChapter >= 1 && manualChapter <= manualBook.chapters && manualVerse >= 1;
+
+  const submitManual = useCallback(() => {
+    if (!manualBook || !canSubmitManual) return;
+    recognitionRef.current?.stop();
+    setTranscript("");
+    applyPosition(manualBook, manualChapter, manualVerse);
+  }, [manualBook, manualChapter, manualVerse, canSubmitManual, applyPosition]);
 
   const goTo = useCallback(
     async (direction: 1 | -1) => {
@@ -343,7 +465,67 @@ export function VoiceVerseLookup() {
             </button>
           ))}
         </div>
+
+        <button
+          type="button"
+          onClick={() => setManualOpen((o) => !o)}
+          className="text-xs font-body text-navy/50 hover:text-navy underline underline-offset-2"
+        >
+          {manualOpen ? "Hide manual entry" : "Voice didn't catch it? Enter book, chapter & verse manually"}
+        </button>
       </div>
+
+      {manualOpen && (
+        <div className="mt-4 rounded-xl border border-dashed border-cream-dark p-4">
+          <p className="text-xs font-body font-semibold text-navy/50 uppercase tracking-wider mb-3">
+            Manual lookup
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_auto_auto] gap-3 items-start">
+            <div>
+              <label className="block text-[11px] font-body text-navy/50 mb-1">Book</label>
+              <BookCombobox value={manualBook} onChange={setManualBook} />
+            </div>
+            <div>
+              <label className="block text-[11px] font-body text-navy/50 mb-1">Chapter</label>
+              <input
+                type="number"
+                min={1}
+                max={manualBook?.chapters ?? undefined}
+                value={manualChapterStr}
+                onChange={(e) => setManualChapterStr(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && submitManual()}
+                placeholder="Ch."
+                className="w-20 rounded-lg border border-cream-dark bg-cream-light text-navy text-sm font-body px-3 py-1.5 focus:outline-none focus:border-navy/40"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-body text-navy/50 mb-1">Verse</label>
+              <input
+                type="number"
+                min={1}
+                value={manualVerseStr}
+                onChange={(e) => setManualVerseStr(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && submitManual()}
+                placeholder="Vs."
+                className="w-20 rounded-lg border border-cream-dark bg-cream-light text-navy text-sm font-body px-3 py-1.5 focus:outline-none focus:border-navy/40"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={submitManual}
+              disabled={!canSubmitManual}
+              className="mt-[22px] px-4 py-1.5 rounded-lg font-body text-sm bg-navy text-cream hover:bg-navy-light transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              Go
+            </button>
+          </div>
+          {manualBook && manualChapter >= 1 && manualChapter > manualBook.chapters && (
+            <p className="text-xs text-burgundy font-body mt-2">
+              {manualBook.name} only has {manualBook.chapters} chapters.
+            </p>
+          )}
+        </div>
+      )}
 
       {position && (
         <>
