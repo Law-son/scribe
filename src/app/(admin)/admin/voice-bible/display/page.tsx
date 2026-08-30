@@ -24,13 +24,13 @@ export default function VoiceBibleDisplayPage() {
         </p>
       ) : (
         <div className="max-w-4xl mx-auto text-center">
-          <p className="text-navy-dark text-base sm:text-lg font-body font-semibold uppercase tracking-[0.2em] mb-6">
+          <p className="text-navy-dark text-lg sm:text-xl font-body font-bold uppercase tracking-[0.2em] mb-6">
             {message!.book} {message!.chapter}:{message!.verse} ({message!.translation})
           </p>
           {message!.status === "loading" ? (
-            <p className="text-navy-dark/40 text-lg font-body italic">Loading…</p>
+            <p className="text-navy-dark/40 text-xl font-body italic">Loading…</p>
           ) : (
-            <p className="font-heading text-navy-dark text-3xl sm:text-5xl leading-relaxed italic">
+            <p className="font-heading text-navy-dark font-bold text-4xl sm:text-6xl leading-relaxed italic">
               &ldquo;{message!.text}&rdquo;
             </p>
           )}
