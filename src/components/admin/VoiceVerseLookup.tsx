@@ -9,7 +9,19 @@ import {
   stripVerseHtml,
   type BibleBook,
 } from "@/lib/bibleBooks";
-import { VOICE_BIBLE_CHANNEL, type VoiceBibleDisplayMessage } from "@/lib/voiceBibleChannel";
+import {
+  VOICE_BIBLE_CHANNEL,
+  DEFAULT_TEXT_SIZE,
+  type VoiceBibleDisplayMessage,
+  type TextSizeId,
+} from "@/lib/voiceBibleChannel";
+
+const TEXT_SIZE_OPTIONS: { id: TextSizeId; label: string }[] = [
+  { id: "sm", label: "S" },
+  { id: "md", label: "M" },
+  { id: "lg", label: "L" },
+  { id: "xl", label: "XL" },
+];
 
 interface Verse {
   verse: number;
@@ -38,6 +50,7 @@ export function VoiceVerseLookup() {
   const [translation, setTranslation] = useState(DEFAULT_TRANSLATION);
   const [position, setPosition] = useState<Position | null>(null);
   const [navigating, setNavigating] = useState(false);
+  const [textSize, setTextSize] = useState<TextSizeId>(DEFAULT_TEXT_SIZE);
 
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const translationRef = useRef(translation);
@@ -211,12 +224,13 @@ export function VoiceVerseLookup() {
           verse: verse?.verse ?? null,
           translation,
           text: verse?.text ?? null,
+          textSize,
         }
-      : { status: "empty", book: null, chapter: null, verse: null, translation, text: null };
+      : { status: "empty", book: null, chapter: null, verse: null, translation, text: null, textSize };
 
     lastMessageRef.current = message;
     channel.postMessage(message);
-  }, [getChannel, position, verse, status, navigating, translation]);
+  }, [getChannel, position, verse, status, navigating, translation, textSize]);
 
   const verseDisplay = (
     <div className="mt-8 border-t border-cream-dark pt-6">
@@ -311,6 +325,21 @@ export function VoiceVerseLookup() {
               }`}
             >
               {t.id}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-2 flex-wrap justify-center">
+          <span className="text-xs text-navy/50 font-body">Display text size:</span>
+          {TEXT_SIZE_OPTIONS.map((opt) => (
+            <button
+              key={opt.id}
+              onClick={() => setTextSize(opt.id)}
+              className={`text-xs px-2.5 py-1 rounded-full font-body transition-colors ${
+                textSize === opt.id ? "bg-navy text-cream" : "bg-cream text-navy/60 hover:text-navy"
+              }`}
+            >
+              {opt.label}
             </button>
           ))}
         </div>
