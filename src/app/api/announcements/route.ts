@@ -8,7 +8,7 @@ import User from "@/models/User";
 
 const CreateSchema = z.object({
   title: z.string().min(1).max(200),
-  body: z.string().min(1).max(160),
+  body: z.string().min(1).max(480),
   isUrgent: z.boolean().default(false),
 });
 
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
   });
 
   const announcementId = doc._id.toString();
-  const message = SMS_TEMPLATES.announcement(doc.title, doc.body);
+  const message = SMS_TEMPLATES.announcement(doc.body);
 
   if (numbers.length > 0) {
     // Fire-and-forget background job — updates DB progress after every batch of 10

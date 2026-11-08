@@ -164,7 +164,7 @@ export const SMS_TEMPLATES = {
     `New Bible Study Notes are available. Access them here: ${url}`,
   devotional: (url: string) =>
     `Today's devotional is ready. Read here: ${url}`,
-  announcement: (title: string, body: string) => `${title}\n${body}`,
+  announcement: (body: string) => body,
   quote: (text: string, author: string, url: string) =>
     `"${text}"\n— ${author}\n${url}`,
 };

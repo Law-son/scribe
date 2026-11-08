@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/Button";
 import toast from "react-hot-toast";
 import Link from "next/link";
 
-const MAX_CHARS = 160;
+// Only the message body is sent by SMS; the provider allows 480 characters (3 segments)
+const MAX_CHARS = 480;
 const POLL_INTERVAL = 1500; // ms
 
 interface SmsStatus {
@@ -72,7 +73,7 @@ function SmsProgressView({ id, total }: { id: string; total: number }) {
           <p className="text-sm text-navy/60 font-body">
             {allProcessed
               ? `Announcement published and SMS sent.`
-              : `Sending in batches of 10. This may take a moment…`}
+              : `Sending in bulk batches. This may take a moment…`}
           </p>
         </div>
 
@@ -144,7 +145,7 @@ export default function NewAnnouncementPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (bodyOver) { toast.error("Message exceeds 160 characters"); return; }
+    if (bodyOver) { toast.error(`Message exceeds ${MAX_CHARS} characters`); return; }
     setLoading(true);
     try {
       const res = await fetch("/api/announcements", {
@@ -188,7 +189,7 @@ export default function NewAnnouncementPage() {
           <div className="flex flex-col gap-1">
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium text-navy font-body">Message *</label>
-              <span className={`text-xs font-body tabular-nums ${bodyOver ? "text-red-600 font-semibold" : bodyLen > 130 ? "text-amber-600" : "text-navy/40"}`}>
+              <span className={`text-xs font-body tabular-nums ${bodyOver ? "text-red-600 font-semibold" : bodyLen > MAX_CHARS - 40 ? "text-amber-600" : "text-navy/40"}`}>
                 {bodyLen} / {MAX_CHARS}
               </span>
             </div>
@@ -196,7 +197,7 @@ export default function NewAnnouncementPage() {
               rows={4}
               required
               maxLength={MAX_CHARS}
-              placeholder="Write the announcement message… (max 160 characters — one SMS)"
+              placeholder="Write the announcement message… (max 480 characters — up to 3 SMS segments)"
               className={`rounded-md border bg-white px-3 py-2 text-sm font-body text-navy-dark focus:outline-none focus:ring-2 resize-none transition-colors ${
                 bodyOver
                   ? "border-red-400 focus:ring-red-400"
@@ -206,7 +207,7 @@ export default function NewAnnouncementPage() {
               onChange={(e) => setForm((f) => ({ ...f, body: e.target.value }))}
             />
             {bodyOver && (
-              <p className="text-xs text-red-600 font-body">Message is too long — trim to 160 characters to fit in one SMS.</p>
+              <p className="text-xs text-red-600 font-body">Message is too long — trim to 480 characters.</p>
             )}
           </div>
 
@@ -225,7 +226,7 @@ export default function NewAnnouncementPage() {
         </div>
 
         <p className="text-xs text-navy/50 font-body">
-          📱 SMS will be sent to all active members in batches of 10, with automatic retries for any failures.
+          📱 SMS will be sent to all active members via bulk send, with automatic retries for any failures.
         </p>
 
         <Button type="submit" loading={loading} size="lg" disabled={bodyOver}>

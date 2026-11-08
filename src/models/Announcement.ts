@@ -19,7 +19,7 @@ export interface IAnnouncement extends Document {
 const AnnouncementSchema = new Schema<IAnnouncement>(
   {
     title: { type: String, required: true, trim: true },
-    body: { type: String, required: true, maxlength: 160 },
+    body: { type: String, required: true, maxlength: 480 },
     isUrgent: { type: Boolean, default: false },
     smsTriggered: { type: Boolean, default: false },
     smsSentAt: { type: Date },
